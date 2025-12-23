@@ -42,9 +42,13 @@ app.get('/health', (req, res) => {
   });
 });
 
+
+
 // API routes (will add later)
-// const routes = require('./routes');
-// app.use('/api', routes);
+// API routes
+const routes = require('./routes');  
+app.use('/api', routes);              
+
 
 // 404 handler - Route not found
 app.use((req, res) => {
