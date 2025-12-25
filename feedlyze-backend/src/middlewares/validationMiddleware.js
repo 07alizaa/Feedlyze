@@ -93,6 +93,7 @@ const updateProfileValidation = [
 ];
 
 module.exports = {
+  validate,
   registerValidation,
   loginValidation,
   updateProfileValidation
