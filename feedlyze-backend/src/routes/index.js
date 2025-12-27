@@ -8,9 +8,9 @@ const surveyRoutes = require('./surveyRoutes');
 const questionRoutes = require('./questionRoutes'); 
 const responseRoutes = require('./responseRoutes');
 const analysisRoutes = require('./analysisRoutes');
+const insightRoutes = require('./insightRoutes');
 
 // Future routes (will be added in later phases)
-// const insightRoutes = require('./insightRoutes');
 // const chatbotRoutes = require('./chatbotRoutes');
 
 // Mount routes
@@ -19,5 +19,6 @@ router.use('/surveys', surveyRoutes);
 router.use('/questions', questionRoutes);
 router.use('/responses', responseRoutes);
 router.use('/analysis', analysisRoutes);
+router.use('/insights', insightRoutes);
 
 module.exports = router;

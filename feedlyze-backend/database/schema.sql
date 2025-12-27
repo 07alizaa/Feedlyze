@@ -2,15 +2,6 @@
 -- FEEDLYZE DATABASE SCHEMA (MVP VERSION)
 -- =====================================================
 
--- Drop tables if they exist (for clean setup)
-DROP TABLE IF EXISTS insights CASCADE;
-DROP TABLE IF EXISTS ai_analysis CASCADE;
-DROP TABLE IF EXISTS answers CASCADE;
-DROP TABLE IF EXISTS responses CASCADE;
-DROP TABLE IF EXISTS questions CASCADE;
-DROP TABLE IF EXISTS surveys CASCADE;
-DROP TABLE IF EXISTS businesses CASCADE;
-
 -- =====================================================
 -- TABLE 1: BUSINESSES
 -- =====================================================

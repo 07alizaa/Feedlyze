@@ -3,6 +3,7 @@ require('dotenv').config();
 const app = require('./src/app');
 const { validateEnv } = require('./src/config/env');
 const logger = require('./src/utils/logger');
+const { scheduleWeeklyInsightJob } = require('./src/jobs/weeklyInsightJob');
 
 // Validate environment variables before starting
 validateEnv();
@@ -14,6 +15,9 @@ const server = app.listen(PORT, () => {
   logger.info(`Feedlyze Backend Server running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info(`Server URL: http://localhost:${PORT}`);
+  
+  // Schedule cron jobs
+  scheduleWeeklyInsightJob();
 });
 
 // Handle unhandled promise rejections
