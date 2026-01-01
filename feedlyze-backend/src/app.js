@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const errorHandler = require('./middlewares/errorHandler');
+const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
 const logger = require('./utils/logger');
 
 const app = express();
@@ -51,13 +51,7 @@ app.use('/api', routes);
 
 
 // 404 handler - Route not found
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Route not found',
-    path: req.originalUrl
-  });
-});
+app.use(notFoundHandler);
 
 // ==========================================
 // GLOBAL ERROR HANDLER
