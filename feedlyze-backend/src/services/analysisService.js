@@ -1,17 +1,32 @@
 // src/services/analysisService.js
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const OpenAI = require('openai');
+const axios = require('axios');
 const { SENTIMENT_THRESHOLDS, SENTIMENT_LABELS } = require('../utils/constants');
 const logger = require('../utils/logger');
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Lazy initialization - get API keys when needed (after dotenv loads)
+const getGeminiKeys = () => (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(Boolean);
+const getGroqKey = () => process.env.GROQ_API_KEY;
+const getOpenAIKey = () => process.env.OPENAI_API_KEY;
+const getHfKey = () => process.env.HF_API_KEY;
+
+const getGenAIs = () => getGeminiKeys().map(key => new GoogleGenerativeAI(key));
+const getGroq = () => {
+  const key = getGroqKey();
+  return key ? new OpenAI({ apiKey: key, baseURL: 'https://api.groq.com/openai/v1' }) : null;
+};
+const getOpenAI = () => {
+  const key = getOpenAIKey();
+  return key ? new OpenAI({ apiKey: key }) : null;
+};
 
 /**
- * AI-powered sentiment analysis service using Google Gemini
+ * AI-powered sentiment analysis service with multiple AI provider fallbacks
  */
 class AnalysisService {
   /**
-   * Analyze text using Gemini AI
+   * Analyze text using AI with fallbacks
    * @param {string} text - Text to analyze
    * @returns {Object} - { score, label, entities }
    */
@@ -24,10 +39,7 @@ class AnalysisService {
       };
     }
 
-    try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-      const prompt = `Analyze the sentiment of this customer feedback and respond ONLY with valid JSON (no markdown, no code blocks):
+    const prompt = `Analyze the sentiment of this customer feedback and respond ONLY with valid JSON (no markdown, no code blocks):
       
 "${text}"
 
@@ -39,38 +51,88 @@ Rules:
 - label: POSITIVE if score > 0.25, NEGATIVE if score < -0.25, else NEUTRAL
 - themes: extract 1-3 key topics mentioned (e.g., "service", "food quality", "wait time")`;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const responseText = response.text().trim();
-
-      // Parse JSON response
-      const analysis = JSON.parse(responseText);
-
-      // Validate and format
-      const score = Math.max(-1, Math.min(1, parseFloat(analysis.score) || 0));
-      let label = analysis.label?.toUpperCase();
-      
-      if (!['POSITIVE', 'NEUTRAL', 'NEGATIVE'].includes(label)) {
-        label = score >= SENTIMENT_THRESHOLDS.POSITIVE ? 'POSITIVE' :
-                score <= SENTIMENT_THRESHOLDS.NEGATIVE ? 'NEGATIVE' : 'NEUTRAL';
+    // Try Gemini first
+    const genAIs = getGenAIs();
+    for (let i = 0; i < genAIs.length; i++) {
+      try {
+        const model = genAIs[i].getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const responseText = response.text().trim();
+        return this.parseAnalysisResponse(responseText);
+      } catch (error) {
+        logger.error(`Gemini key ${i + 1} failed for analysis:`, error.message);
       }
-
-      const entities = (analysis.themes || []).map(theme => ({
-        theme: theme,
-        sentiment: label
-      }));
-
-      return {
-        score: Math.round(score * 100) / 100,
-        label,
-        entities
-      };
-
-    } catch (error) {
-      logger.error('Gemini AI analysis error:', error.message);
-      // Fallback to simple keyword analysis
-      return this.fallbackAnalysis(text);
     }
+
+    // Try Groq (FREE)
+    const groq = getGroq();
+    if (groq) {
+      try {
+        logger.info('Trying Groq for analysis...');
+        const completion = await groq.chat.completions.create({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 256,
+        });
+        const responseText = completion.choices[0].message.content.trim();
+        return this.parseAnalysisResponse(responseText);
+      } catch (error) {
+        logger.error('Groq analysis error:', error.message);
+      }
+    }
+
+    // Try OpenAI
+    const openai = getOpenAI();
+    if (openai) {
+      try {
+        logger.info('Trying OpenAI for analysis...');
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 256,
+        });
+        const responseText = completion.choices[0].message.content.trim();
+        return this.parseAnalysisResponse(responseText);
+      } catch (error) {
+        logger.error('OpenAI analysis error:', error.message);
+      }
+    }
+
+    // Fallback to simple keyword analysis
+    logger.warn('All AI providers failed, using fallback keyword analysis');
+    return this.fallbackAnalysis(text);
+  }
+
+  /**
+   * Parse AI response into analysis result
+   */
+  static parseAnalysisResponse(responseText) {
+    // Clean up response - remove markdown code blocks if present
+    let cleanText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    const analysis = JSON.parse(cleanText);
+
+    const score = Math.max(-1, Math.min(1, parseFloat(analysis.score) || 0));
+    let label = analysis.label?.toUpperCase();
+    
+    if (!['POSITIVE', 'NEUTRAL', 'NEGATIVE'].includes(label)) {
+      label = score >= SENTIMENT_THRESHOLDS.POSITIVE ? 'POSITIVE' :
+              score <= SENTIMENT_THRESHOLDS.NEGATIVE ? 'NEGATIVE' : 'NEUTRAL';
+    }
+
+    const entities = (analysis.themes || []).map(theme => ({
+      theme: theme,
+      sentiment: label
+    }));
+
+    return {
+      score: Math.round(score * 100) / 100,
+      label,
+      entities
+    };
   }
 
   /**

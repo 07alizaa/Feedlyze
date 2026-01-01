@@ -4,6 +4,14 @@
  * Validates that all required environment variables are set
  * Exits process if any required variable is missing
  */
+
+/**
+ * Add Gemini and Hugging Face API keys as optional environment variables.
+ * Example fallback logic (in your service):
+ *   const geminiKey = process.env.GEMINI_API_KEY;
+ *   const hfKey = process.env.HF_API_KEY;
+ *   // Use Gemini first, fallback to Hugging Face if needed
+ */
 const validateEnv = () => {
   const requiredEnvVars = [
     'PORT',
@@ -13,6 +21,7 @@ const validateEnv = () => {
     'DB_NAME',
     'DB_USER',
     'DB_PASSWORD'
+    // GEMINI_API_KEYS and HF_API_KEY are optional
   ];
 
   const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);

@@ -35,6 +35,9 @@ build/
 coverage/
 .nyc_output/
 
+# Scripts (seed data)
+scripts/
+
 # Testing documentation
 API_TESTING_GUIDE.md
 Feedlyze_API.postman_collection.json
