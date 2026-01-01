@@ -53,7 +53,7 @@ const apiLimiter = createLimiter({
  * Strict rate limiter for resource creation
  * 20 requests per hour
  */
-const createLimiter = createLimiter({
+const resourceCreateLimiter = createLimiter({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 20,
   message: {
@@ -79,5 +79,6 @@ module.exports = {
   createLimiter,
   authLimiter,
   apiLimiter,
+  resourceCreateLimiter,
   aiLimiter
 };

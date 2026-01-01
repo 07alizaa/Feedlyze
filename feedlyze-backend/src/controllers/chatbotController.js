@@ -176,8 +176,156 @@ const getSuggestions = async (req, res, next) => {
   }
 };
 
+/**
+ * Generate a complete survey from natural language
+ * POST /api/chatbot/generate-survey
+ */
+const generateSurvey = async (req, res, next) => {
+  try {
+    const businessId = req.userId;
+    const { description, questionCount } = req.body;
+
+    // Get business context
+    const business = await Business.findById(businessId);
+    const businessContext = {
+      businessName: business?.business_name,
+      industry: business?.industry
+    };
+
+    // Generate survey using AI
+    const result = await ChatbotService.generateSurveyFromDescription(
+      description,
+      questionCount || 5,
+      businessContext
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        surveyData: result.surveyData,
+        message: result.message
+      }
+    });
+
+  } catch (error) {
+    logger.error('Generate survey error:', error);
+    next(error);
+  }
+};
+
+/**
+ * Refine an existing survey based on feedback
+ * POST /api/chatbot/refine-survey
+ */
+const refineSurvey = async (req, res, next) => {
+  try {
+    const businessId = req.userId;
+    const { surveyData, feedback } = req.body;
+
+    // Get business context
+    const business = await Business.findById(businessId);
+    const businessContext = {
+      businessName: business?.business_name,
+      industry: business?.industry
+    };
+
+    // Refine survey using AI
+    const result = await ChatbotService.refineSurvey(
+      surveyData,
+      feedback,
+      businessContext
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        surveyData: result.surveyData,
+        changes: result.changes,
+        message: result.message
+      }
+    });
+
+  } catch (error) {
+    logger.error('Refine survey error:', error);
+    next(error);
+  }
+};
+
+/**
+ * Get AI suggestions to improve a survey
+ * POST /api/chatbot/suggest-improvements
+ */
+const suggestImprovements = async (req, res, next) => {
+  try {
+    const businessId = req.userId;
+    const { surveyId, surveyData } = req.body;
+
+    let survey = surveyData;
+
+    // If surveyId provided, fetch the survey
+    if (surveyId && !surveyData) {
+      const Survey = require('../models/Survey');
+      const Question = require('../models/Question');
+      
+      const existingSurvey = await Survey.findById(surveyId, businessId);
+      
+      if (!existingSurvey) {
+        return res.status(404).json({
+          success: false,
+          error: 'Survey not found'
+        });
+      }
+
+      const questions = await Question.findBySurveyId(surveyId);
+      survey = {
+        title: existingSurvey.title,
+        description: existingSurvey.description,
+        questions: questions.map(q => ({
+          question_text: q.question_text,
+          question_type: q.question_type,
+          options: q.options,
+          is_required: q.is_required
+        }))
+      };
+    }
+
+    if (!survey) {
+      return res.status(400).json({
+        success: false,
+        error: 'Either surveyId or surveyData is required'
+      });
+    }
+
+    // Get business context
+    const business = await Business.findById(businessId);
+    const businessContext = {
+      businessName: business?.business_name,
+      industry: business?.industry
+    };
+
+    // Get AI suggestions
+    const result = await ChatbotService.suggestImprovements(survey, businessContext);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        suggestions: result.suggestions,
+        improvedSurvey: result.improvedSurvey,
+        message: result.message
+      }
+    });
+
+  } catch (error) {
+    logger.error('Suggest improvements error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   sendMessage,
+  generateSurvey,
+  refineSurvey,
+  suggestImprovements,
   createSurvey,
   getHistory,
   resetConversation,

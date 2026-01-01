@@ -211,5 +211,167 @@ module.exports = {
   getInsightById,
   generateInsights,
   generateAllInsights,
-  getInsightTrends
+  getInsightTrends,
+  getOverviewStats,
+  getThemeBreakdown,
+  getSurveyComparison
+};
+
+/**
+ * Get overview statistics for dashboard cards
+ * GET /api/insights/overview
+ */
+const getOverviewStats = async (req, res, next) => {
+  try {
+    const businessId = req.userId;
+    const Survey = require('../models/Survey');
+    const Response = require('../models/Response');
+    const AIAnalysis = require('../models/AIAnalysis');
+
+    // Get survey count
+    const surveys = await Survey.findByBusinessId(businessId, { limit: 1000, offset: 0 });
+    const totalSurveys = surveys.length;
+    const activeSurveys = surveys.filter(s => s.is_active).length;
+
+    // Get total responses across all surveys
+    const totalResponses = surveys.reduce((sum, s) => sum + (s.response_count || 0), 0);
+
+    // Get sentiment breakdown for this business
+    const sentimentStats = await AIAnalysis.getBusinessSentimentStats(businessId);
+
+    // Get this week's data
+    const InsightService = require('../services/insightService');
+    const { startDate, endDate } = InsightService.getWeekBoundaries();
+    const thisWeekStats = await Insight.getAggregatedStats(businessId, startDate, endDate);
+
+    // Get previous week for comparison
+    const { startDate: prevStart, endDate: prevEnd } = InsightService.getPreviousWeekBoundaries();
+    const prevWeekStats = await Insight.getAggregatedStats(businessId, prevStart, prevEnd);
+
+    const thisWeekResponses = parseInt(thisWeekStats?.total_responses) || 0;
+    const prevWeekResponses = parseInt(prevWeekStats?.total_responses) || 0;
+    const responseChange = prevWeekResponses > 0 
+      ? (((thisWeekResponses - prevWeekResponses) / prevWeekResponses) * 100).toFixed(1)
+      : null;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        surveys: {
+          total: totalSurveys,
+          active: activeSurveys
+        },
+        responses: {
+          total: totalResponses,
+          thisWeek: thisWeekResponses,
+          previousWeek: prevWeekResponses,
+          percentChange: responseChange
+        },
+        sentiment: {
+          total_analyzed: parseInt(sentimentStats?.total_analyzed) || 0,
+          positive: parseInt(sentimentStats?.positive_count) || 0,
+          neutral: parseInt(sentimentStats?.neutral_count) || 0,
+          negative: parseInt(sentimentStats?.negative_count) || 0,
+          averageScore: sentimentStats?.average_sentiment 
+            ? parseFloat(sentimentStats.average_sentiment).toFixed(2) 
+            : null
+        }
+      }
+    });
+  } catch (error) {
+    logger.error('Get overview stats error:', error);
+    next(error);
+  }
+};
+
+/**
+ * Get theme/entity breakdown for pie/bar charts
+ * GET /api/insights/themes
+ */
+const getThemeBreakdown = async (req, res, next) => {
+  try {
+    const businessId = req.userId;
+    const { limit = 10 } = req.query;
+    const AIAnalysis = require('../models/AIAnalysis');
+
+    // Get all entities from analysis
+    const entities = await AIAnalysis.getBusinessThemes(businessId, parseInt(limit));
+
+    // Format for chart
+    const chartData = {
+      labels: entities.map(e => e.theme),
+      data: entities.map(e => e.count),
+      sentiments: entities.map(e => ({
+        theme: e.theme,
+        positive: e.positive_count || 0,
+        negative: e.negative_count || 0,
+        neutral: e.neutral_count || 0
+      }))
+    };
+
+    res.status(200).json({
+      success: true,
+      data: {
+        themes: entities,
+        chartData
+      }
+    });
+  } catch (error) {
+    logger.error('Get theme breakdown error:', error);
+    next(error);
+  }
+};
+
+/**
+ * Get survey comparison data
+ * GET /api/insights/survey-comparison
+ */
+const getSurveyComparison = async (req, res, next) => {
+  try {
+    const businessId = req.userId;
+    const Survey = require('../models/Survey');
+    const AIAnalysis = require('../models/AIAnalysis');
+
+    // Get all surveys with their stats
+    const surveys = await Survey.findByBusinessId(businessId, { limit: 20, offset: 0 });
+
+    const comparisonData = await Promise.all(
+      surveys.map(async (survey) => {
+        const stats = await AIAnalysis.getSurveySentimentSummary(survey.id);
+        return {
+          id: survey.id,
+          title: survey.title,
+          responseCount: survey.response_count || 0,
+          analyzedCount: parseInt(stats?.total_analyzed) || 0,
+          positive: parseInt(stats?.positive_count) || 0,
+          neutral: parseInt(stats?.neutral_count) || 0,
+          negative: parseInt(stats?.negative_count) || 0,
+          avgSentiment: stats?.average_sentiment 
+            ? parseFloat(stats.average_sentiment).toFixed(2) 
+            : null,
+          isActive: survey.is_active,
+          createdAt: survey.created_at
+        };
+      })
+    );
+
+    // Sort by response count descending
+    comparisonData.sort((a, b) => b.responseCount - a.responseCount);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        surveys: comparisonData,
+        chartData: {
+          labels: comparisonData.map(s => s.title.substring(0, 20)),
+          responses: comparisonData.map(s => s.responseCount),
+          positive: comparisonData.map(s => s.positive),
+          negative: comparisonData.map(s => s.negative)
+        }
+      }
+    });
+  } catch (error) {
+    logger.error('Get survey comparison error:', error);
+    next(error);
+  }
 };

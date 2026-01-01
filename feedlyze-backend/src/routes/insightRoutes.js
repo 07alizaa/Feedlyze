@@ -45,6 +45,47 @@ router.get(
 );
 
 /**
+ * @route   GET /api/insights/overview
+ * @desc    Get overview statistics for dashboard cards
+ * @access  Private
+ */
+router.get(
+  '/overview',
+  verifyToken,
+  insightController.getOverviewStats
+);
+
+/**
+ * @route   GET /api/insights/themes
+ * @desc    Get theme/entity breakdown for charts
+ * @access  Private
+ * @query   limit (default: 10)
+ */
+router.get(
+  '/themes',
+  verifyToken,
+  [
+    query('limit')
+      .optional()
+      .isInt({ min: 1, max: 50 })
+      .withMessage('limit must be between 1 and 50')
+  ],
+  validate,
+  insightController.getThemeBreakdown
+);
+
+/**
+ * @route   GET /api/insights/survey-comparison
+ * @desc    Get comparison data across all surveys
+ * @access  Private
+ */
+router.get(
+  '/survey-comparison',
+  verifyToken,
+  insightController.getSurveyComparison
+);
+
+/**
  * @route   GET /api/insights/trends
  * @desc    Get trend data formatted for charts
  * @access  Private

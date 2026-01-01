@@ -360,10 +360,279 @@ const getSuggestions = (industry) => {
   return suggestions[industry] || suggestions['default'];
 };
 
+/**
+ * Generate a complete survey from a natural language description
+ * @param {string} description - User's description of what survey they need
+ * @param {number} questionCount - Desired number of questions
+ * @param {Object} businessContext - Business context info
+ * @returns {Object} - { surveyData, message }
+ */
+const generateSurveyFromDescription = async (description, questionCount = 5, businessContext = {}) => {
+  const prompt = `Generate a customer feedback survey based on this description:
+
+"${description}"
+
+Business: ${businessContext.businessName || 'Unknown'}
+Industry: ${businessContext.industry || 'General'}
+Number of questions: ${questionCount}
+
+Respond with ONLY a valid JSON object (no markdown, no code blocks):
+{
+  "title": "Survey Title Here",
+  "description": "Brief survey description",
+  "questions": [
+    {
+      "question_text": "Your question here?",
+      "question_type": "rating|text|mcq",
+      "is_required": true,
+      "options": ["Option 1", "Option 2"]
+    }
+  ]
+}
+
+Rules:
+- Generate exactly ${questionCount} questions
+- question_type must be one of: "rating" (1-5 stars), "text" (open-ended), "mcq" (multiple choice)
+- Only include "options" array for mcq type questions (minimum 2 options)
+- Make questions relevant to the business industry
+- Start with a rating question about overall satisfaction
+- Include at least one text question for detailed feedback
+- Make questions clear and actionable`;
+
+  const response = await callAI(prompt);
+  const surveyData = parseJsonFromResponse(response);
+
+  if (!surveyData || !surveyData.title || !surveyData.questions) {
+    throw new Error('Failed to generate valid survey. Please try again with a more detailed description.');
+  }
+
+  return {
+    surveyData,
+    message: `Generated "${surveyData.title}" with ${surveyData.questions.length} questions.`
+  };
+};
+
+/**
+ * Refine an existing survey based on user feedback
+ * @param {Object} surveyData - Existing survey data
+ * @param {string} feedback - User's refinement request
+ * @param {Object} businessContext - Business context info
+ * @returns {Object} - { surveyData, changes, message }
+ */
+const refineSurvey = async (surveyData, feedback, businessContext = {}) => {
+  const prompt = `Refine this customer feedback survey based on the user's feedback.
+
+CURRENT SURVEY:
+${JSON.stringify(surveyData, null, 2)}
+
+USER'S FEEDBACK/REQUEST:
+"${feedback}"
+
+Business: ${businessContext.businessName || 'Unknown'}
+Industry: ${businessContext.industry || 'General'}
+
+Respond with ONLY a valid JSON object (no markdown, no code blocks):
+{
+  "title": "Updated Survey Title",
+  "description": "Updated description",
+  "questions": [
+    {
+      "question_text": "Updated question?",
+      "question_type": "rating|text|mcq",
+      "is_required": true,
+      "options": ["Option 1", "Option 2"]
+    }
+  ],
+  "changes": ["List of changes made", "Change 2", "etc"]
+}
+
+Rules:
+- Apply the user's requested changes
+- Keep existing good questions if not mentioned
+- question_type must be one of: "rating", "text", "mcq"
+- Only include "options" for mcq type (minimum 2 options)
+- Include a "changes" array describing what was modified`;
+
+  const response = await callAI(prompt);
+  const result = parseJsonFromResponse(response);
+
+  if (!result || !result.title || !result.questions) {
+    throw new Error('Failed to refine survey. Please try again.');
+  }
+
+  return {
+    surveyData: {
+      title: result.title,
+      description: result.description,
+      questions: result.questions
+    },
+    changes: result.changes || ['Survey refined based on feedback'],
+    message: `Survey refined with ${result.changes?.length || 1} changes.`
+  };
+};
+
+/**
+ * Suggest improvements for an existing survey
+ * @param {Object} surveyData - Survey to analyze
+ * @param {Object} businessContext - Business context info
+ * @returns {Object} - { suggestions, improvedSurvey, message }
+ */
+const suggestImprovements = async (surveyData, businessContext = {}) => {
+  const prompt = `Analyze this customer feedback survey and suggest improvements.
+
+CURRENT SURVEY:
+${JSON.stringify(surveyData, null, 2)}
+
+Business: ${businessContext.businessName || 'Unknown'}
+Industry: ${businessContext.industry || 'General'}
+
+Respond with ONLY a valid JSON object (no markdown, no code blocks):
+{
+  "suggestions": [
+    {
+      "type": "add|remove|modify|reorder",
+      "description": "What should be changed and why",
+      "priority": "high|medium|low"
+    }
+  ],
+  "improvedSurvey": {
+    "title": "Improved Survey Title",
+    "description": "Improved description",
+    "questions": [
+      {
+        "question_text": "Improved question?",
+        "question_type": "rating|text|mcq",
+        "is_required": true,
+        "options": ["Option 1", "Option 2"]
+      }
+    ]
+  },
+  "score": 75,
+  "analysis": "Brief analysis of current survey quality"
+}
+
+Rules:
+- Provide 3-5 actionable suggestions
+- Score the current survey from 0-100
+- Create an improved version applying your suggestions
+- Focus on clarity, actionability, and industry relevance
+- Ensure good mix of question types
+- Check for leading or biased questions`;
+
+  const response = await callAI(prompt);
+  const result = parseJsonFromResponse(response);
+
+  if (!result || !result.suggestions) {
+    throw new Error('Failed to analyze survey. Please try again.');
+  }
+
+  return {
+    suggestions: result.suggestions,
+    improvedSurvey: result.improvedSurvey,
+    score: result.score,
+    analysis: result.analysis,
+    message: `Found ${result.suggestions.length} suggestions. Current score: ${result.score}/100`
+  };
+};
+
+/**
+ * Call AI with fallback providers (Gemini -> Groq -> OpenAI -> HuggingFace)
+ */
+const callAI = async (prompt) => {
+  // Try Gemini
+  const genAIs = getGenAIs();
+  for (let i = 0; i < genAIs.length; i++) {
+    try {
+      const model = genAIs[i].getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const result = await model.generateContent(prompt);
+      return result.response.text();
+    } catch (error) {
+      logger.error(`Gemini key ${i + 1} failed:`, error.message);
+    }
+  }
+
+  // Try Groq
+  const groq = getGroq();
+  if (groq) {
+    try {
+      logger.info('Trying Groq API...');
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
+      return completion.choices[0].message.content;
+    } catch (error) {
+      logger.error('Groq error:', error.message);
+    }
+  }
+
+  // Try OpenAI
+  const openai = getOpenAI();
+  if (openai) {
+    try {
+      logger.info('Trying OpenAI API...');
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 2048,
+      });
+      return completion.choices[0].message.content;
+    } catch (error) {
+      logger.error('OpenAI error:', error.message);
+    }
+  }
+
+  // Try HuggingFace
+  const hfKey = getHfKey();
+  if (hfKey) {
+    try {
+      const hfResponse = await axios.post(
+        'https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1',
+        { inputs: prompt, parameters: { max_new_tokens: 1024, temperature: 0.7 } },
+        { headers: { Authorization: `Bearer ${hfKey}` } }
+      );
+      return hfResponse.data?.[0]?.generated_text || hfResponse.data?.generated_text || '';
+    } catch (error) {
+      logger.error('HuggingFace error:', error.message);
+    }
+  }
+
+  throw new Error('All AI providers failed. Please try again later.');
+};
+
+/**
+ * Parse JSON from AI response (handles markdown code blocks)
+ */
+const parseJsonFromResponse = (response) => {
+  try {
+    // Remove markdown code blocks if present
+    let cleanText = response
+      .replace(/```json\n?/gi, '')
+      .replace(/```\n?/g, '')
+      .trim();
+
+    // Try to find JSON object
+    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return null;
+  } catch (error) {
+    logger.error('JSON parse error:', error.message);
+    return null;
+  }
+};
+
 module.exports = {
   processMessage,
   createSurveyFromChat,
   clearConversation,
   getConversationHistory,
-  getSuggestions
+  getSuggestions,
+  generateSurveyFromDescription,
+  refineSurvey,
+  suggestImprovements
 };
