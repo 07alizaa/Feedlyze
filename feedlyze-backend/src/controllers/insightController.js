@@ -205,18 +205,6 @@ const getInsightTrends = async (req, res, next) => {
   }
 };
 
-module.exports = {
-  getWeeklyInsights,
-  getDashboard,
-  getInsightById,
-  generateInsights,
-  generateAllInsights,
-  getInsightTrends,
-  getOverviewStats,
-  getThemeBreakdown,
-  getSurveyComparison
-};
-
 /**
  * Get overview statistics for dashboard cards
  * GET /api/insights/overview
@@ -374,4 +362,16 @@ const getSurveyComparison = async (req, res, next) => {
     logger.error('Get survey comparison error:', error);
     next(error);
   }
+};
+
+module.exports = {
+  getWeeklyInsights,
+  getDashboard,
+  getInsightById,
+  generateInsights,
+  generateAllInsights,
+  getInsightTrends,
+  getOverviewStats,
+  getThemeBreakdown,
+  getSurveyComparison
 };
