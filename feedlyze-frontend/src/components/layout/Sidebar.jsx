@@ -5,7 +5,6 @@ import {
   ClipboardList,
   MessageSquare,
   BarChart3,
-  Bot,
   Settings,
   LogOut,
   X,
@@ -19,7 +18,6 @@ const menuItems = [
   { path: '/surveys', icon: ClipboardList, label: 'Surveys' },
   { path: '/responses', icon: MessageSquare, label: 'Responses' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-  { path: '/ai-assistant', icon: Bot, label: 'AI Assistant' },
 ];
 
 const bottomMenuItems = [

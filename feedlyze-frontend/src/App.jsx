@@ -10,6 +10,18 @@ import { Login, Register } from './pages/auth';
 // Dashboard Pages
 import { Dashboard } from './pages/dashboard';
 
+// Survey Pages
+import { SurveysList, SurveyBuilder, PublicSurvey } from './pages/surveys';
+
+// Response Pages
+import { ResponsesList, ResponseDetail } from './pages/responses';
+
+// Insights Pages
+import { Insights } from './pages/analytics';
+
+// Settings Pages
+import { Settings } from './pages/settings';
+
 // Landing Page
 import LandingPage from './pages/LandingPage';
 
@@ -56,19 +68,26 @@ function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
 
-              {/* Placeholder routes - will be implemented in later phases */}
-              <Route path="/surveys" element={<ComingSoon title="Surveys" />} />
-              <Route path="/surveys/create" element={<ComingSoon title="Create Survey" />} />
-              <Route path="/surveys/:id" element={<ComingSoon title="Survey Details" />} />
-              <Route path="/responses" element={<ComingSoon title="Responses" />} />
-              <Route path="/analytics" element={<ComingSoon title="Analytics" />} />
-              <Route path="/ai-assistant" element={<ComingSoon title="AI Assistant" />} />
-              <Route path="/settings" element={<ComingSoon title="Settings" />} />
+              {/* Survey Routes */}
+              <Route path="/surveys" element={<SurveysList />} />
+              <Route path="/surveys/create" element={<SurveyBuilder />} />
+              <Route path="/surveys/:id" element={<SurveyBuilder />} />
+              <Route path="/surveys/:id/edit" element={<SurveyBuilder />} />
+
+              {/* Response Routes */}
+              <Route path="/responses" element={<ResponsesList />} />
+              <Route path="/responses/:id" element={<ResponseDetail />} />
+
+              {/* Insights Routes */}
+              <Route path="/analytics" element={<Insights />} />
+
+              {/* Settings Route */}
+              <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
 
           {/* Public Survey Route (for QR code access) */}
-          <Route path="/s/:shortCode" element={<ComingSoon title="Public Survey" />} />
+          <Route path="/s/:shortCode" element={<PublicSurvey />} />
 
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
@@ -77,13 +96,5 @@ function App() {
     </BrowserRouter>
   );
 }
-
-// Temporary placeholder component
-const ComingSoon = ({ title }) => (
-  <div className="flex flex-col items-center justify-center h-64">
-    <h1 className="text-2xl font-bold text-dark-900 mb-2">{title}</h1>
-    <p className="text-dark-500">Coming soon in the next phase...</p>
-  </div>
-);
 
 export default App;

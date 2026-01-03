@@ -9,16 +9,16 @@ const logger = require('../utils/logger');
 // Lazy initialization - get API keys when needed (after dotenv loads)
 const getGeminiKeys = () => (process.env.GEMINI_API_KEYS || process.env.GEMINI_API_KEY || '').split(',').map(k => k.trim()).filter(Boolean);
 const getHfKey = () => process.env.HF_API_KEY;
-const getOpenAIKey = () => process.env.OPENAI_API_KEY;
 const getGroqKey = () => process.env.GROQ_API_KEY;
+const getDeepSeekKey = () => process.env.DEEPSEEK_API_KEY;
 const getGenAIs = () => getGeminiKeys().map(key => new GoogleGenerativeAI(key));
-const getOpenAI = () => {
-  const key = getOpenAIKey();
-  return key ? new OpenAI({ apiKey: key }) : null;
-};
 const getGroq = () => {
   const key = getGroqKey();
   return key ? new OpenAI({ apiKey: key, baseURL: 'https://api.groq.com/openai/v1' }) : null;
+};
+const getDeepSeek = () => {
+  const key = getDeepSeekKey();
+  return key ? new OpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com' }) : null;
 };
 
 // Store conversation history per user session
@@ -166,11 +166,11 @@ const processMessage = async (userId, message, businessContext = {}) => {
     }
   }
 
-  // Fallback to OpenAI
-  const openai = getOpenAI();
-  if (openai) {
+  // Fallback to DeepSeek (FREE tier)
+  const deepseek = getDeepSeek();
+  if (deepseek) {
     try {
-      logger.info('Trying OpenAI API...');
+      logger.info('Trying DeepSeek API (free tier)...');
       const messages = [
         { role: 'system', content: SYSTEM_PROMPT + contextMessage },
         ...conversation.map(msg => ({
@@ -180,8 +180,8 @@ const processMessage = async (userId, message, businessContext = {}) => {
         { role: 'user', content: message }
       ];
       
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+      const completion = await deepseek.chat.completions.create({
+        model: 'deepseek-chat',
         messages: messages,
         temperature: 0.7,
         max_tokens: 1024,
@@ -197,7 +197,7 @@ const processMessage = async (userId, message, businessContext = {}) => {
         conversationId: `conv_${userId}_${Date.now()}`
       };
     } catch (error) {
-      logger.error('OpenAI error:', error.message);
+      logger.error('DeepSeek error:', error.message);
     }
   }
 
@@ -225,11 +225,11 @@ const processMessage = async (userId, message, businessContext = {}) => {
       };
     } catch (error) {
       logger.error('Hugging Face error:', error.message);
-      throw new Error('All AI APIs (Gemini, OpenAI, Hugging Face) failed.');
+      throw new Error('All AI APIs (Gemini, Groq, OpenAI, DeepSeek, Hugging Face) failed.');
     }
   }
 
-  throw new Error('No AI API key configured. Please set GEMINI_API_KEY, OPENAI_API_KEY, or HF_API_KEY.');
+  throw new Error('No AI API key configured. Please set GEMINI_API_KEY, GROQ_API_KEY, OPENAI_API_KEY, DEEPSEEK_API_KEY, or HF_API_KEY.');
 };
 
 /**

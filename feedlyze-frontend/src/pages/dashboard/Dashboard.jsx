@@ -81,7 +81,8 @@ const Dashboard = () => {
       ]);
 
       const overview = overviewRes.data.data || {};
-      const surveys = surveysRes.data.data || [];
+      const surveysData = surveysRes.data.data || {};
+      const surveys = Array.isArray(surveysData) ? surveysData : (surveysData.surveys || []);
 
       setStats({
         totalSurveys: surveys.length,

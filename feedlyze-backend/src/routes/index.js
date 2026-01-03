@@ -1,7 +1,7 @@
 // src/routes/index.js
 const express = require('express');
 const router = express.Router();
-const { authLimiter, apiLimiter } = require('../middlewares/rateLimiter');
+const { apiLimiter } = require('../middlewares/rateLimiter');
 
 // Import route modules
 const authRoutes = require('./authRoutes');
@@ -13,8 +13,8 @@ const insightRoutes = require('./insightRoutes');
 const chatbotRoutes = require('./chatbotRoutes');
 
 // Mount routes with rate limiting
-// Auth routes: strict rate limiting (5 req/15min for login/register)
-router.use('/auth', authLimiter, authRoutes);
+// Auth routes: no rate limiting for login/signup
+router.use('/auth', authRoutes);
 
 // API routes: moderate rate limiting (100 req/15min)
 router.use('/surveys', apiLimiter, surveyRoutes);     
