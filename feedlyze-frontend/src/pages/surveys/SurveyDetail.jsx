@@ -42,7 +42,8 @@ const SurveyDetail = () => {
       ]);
 
       setSurvey(surveyRes.data.data);
-      setRecentResponses(responsesRes.data.data || []);
+      const responsesData = responsesRes.data.data || {};
+      setRecentResponses(Array.isArray(responsesData) ? responsesData : (responsesData.responses || []));
     } catch (_error) {
       toast.error('Failed to load survey');
       navigate('/surveys');
@@ -293,14 +294,14 @@ const SurveyDetail = () => {
                       className="p-3 bg-light-50 rounded-lg"
                     >
                       <p className="text-sm text-dark-600 line-clamp-2">
-                        {response.feedback_text || 'Rating only'}
+                        Response #{response.id} - {response.answer_count || 0} answers
                       </p>
                       <div className="flex items-center justify-between mt-2">
                         <Badge variant={sentiment.color} size="sm">
                           {sentiment.emoji}
                         </Badge>
                         <span className="text-xs text-dark-400">
-                          {formatRelativeTime(response.created_at)}
+                          {formatRelativeTime(response.submitted_at)}
                         </span>
                       </div>
                     </div>

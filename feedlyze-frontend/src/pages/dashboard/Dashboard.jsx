@@ -12,7 +12,7 @@ import {
 import { Card, Badge, Button, Spinner } from '../../components/common';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../config/api';
-import { formatRelativeTime, getSentimentFromScore, formatSentimentScore, truncateText } from '../../utils/helpers';
+import { formatRelativeTime, getSentimentFromScore, formatSentimentScore } from '../../utils/helpers';
 
 // Metric Card Component
 const MetricCard = ({ title, value, change, changeType, icon: Icon, color }) => {
@@ -64,6 +64,11 @@ const Dashboard = () => {
     totalResponses: 0,
     avgSentiment: 0,
   });
+  const [sentimentBreakdown, setSentimentBreakdown] = useState({
+    positive: 0,
+    neutral: 0,
+    negative: 0,
+  });
   const [recentResponses, setRecentResponses] = useState([]);
 
   useEffect(() => {
@@ -91,11 +96,26 @@ const Dashboard = () => {
         avgSentiment: overview.avgSentiment || 0,
       });
 
+      // Calculate sentiment breakdown percentages
+      const total = (overview.positiveCount || 0) + (overview.neutralCount || 0) + (overview.negativeCount || 0);
+      if (total > 0) {
+        setSentimentBreakdown({
+          positive: Math.round((overview.positiveCount || 0) / total * 100),
+          neutral: Math.round((overview.neutralCount || 0) / total * 100),
+          negative: Math.round((overview.negativeCount || 0) / total * 100),
+        });
+      }
+
       // Get recent responses from the latest survey
       if (surveys.length > 0) {
         try {
           const responsesRes = await api.get(`/responses/survey/${surveys[0].id}?limit=5`);
-          setRecentResponses(responsesRes.data.data || []);
+          const responsesData = responsesRes.data.data || {};
+          // Handle both array and object with responses property
+          const responses = Array.isArray(responsesData) 
+            ? responsesData 
+            : (responsesData.responses || []);
+          setRecentResponses(responses);
         } catch (_e) {
           setRecentResponses([]);
         }
@@ -191,11 +211,11 @@ const Dashboard = () => {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <p className="text-dark-700">
-                            {truncateText(response.feedback_text || 'No text feedback', 120)}
+                            Response #{response.id} - {response.answer_count || 0} answers
                           </p>
                           <div className="flex items-center gap-3 mt-2">
                             <span className="text-xs text-dark-400">
-                              {formatRelativeTime(response.created_at)}
+                              {formatRelativeTime(response.submitted_at)}
                             </span>
                             <Badge variant={sentiment.color} size="sm">
                               {sentiment.emoji} {sentiment.label}
@@ -247,31 +267,37 @@ const Dashboard = () => {
           {/* Sentiment Overview */}
           <Card>
             <h2 className="font-semibold text-dark-900 mb-4">Sentiment Overview</h2>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-dark-600">Positive</span>
-                <span className="text-sm font-medium text-success-600">68%</span>
+            {stats.totalResponses === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-dark-400 text-sm">No responses analyzed yet</p>
               </div>
-              <div className="w-full bg-light-200 rounded-full h-2">
-                <div className="bg-success-500 h-2 rounded-full" style={{ width: '68%' }} />
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-dark-600">Positive</span>
+                  <span className="text-sm font-medium text-success-600">{sentimentBreakdown.positive}%</span>
+                </div>
+                <div className="w-full bg-light-200 rounded-full h-2">
+                  <div className="bg-success-500 h-2 rounded-full" style={{ width: `${sentimentBreakdown.positive}%` }} />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-dark-600">Neutral</span>
+                  <span className="text-sm font-medium text-warning-600">{sentimentBreakdown.neutral}%</span>
+                </div>
+                <div className="w-full bg-light-200 rounded-full h-2">
+                  <div className="bg-warning-500 h-2 rounded-full" style={{ width: `${sentimentBreakdown.neutral}%` }} />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-dark-600">Negative</span>
+                  <span className="text-sm font-medium text-danger-600">{sentimentBreakdown.negative}%</span>
+                </div>
+                <div className="w-full bg-light-200 rounded-full h-2">
+                  <div className="bg-danger-500 h-2 rounded-full" style={{ width: `${sentimentBreakdown.negative}%` }} />
+                </div>
               </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-dark-600">Neutral</span>
-                <span className="text-sm font-medium text-warning-600">22%</span>
-              </div>
-              <div className="w-full bg-light-200 rounded-full h-2">
-                <div className="bg-warning-500 h-2 rounded-full" style={{ width: '22%' }} />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-dark-600">Negative</span>
-                <span className="text-sm font-medium text-danger-600">10%</span>
-              </div>
-              <div className="w-full bg-light-200 rounded-full h-2">
-                <div className="bg-danger-500 h-2 rounded-full" style={{ width: '10%' }} />
-              </div>
-            </div>
+            )}
           </Card>
         </div>
       </div>

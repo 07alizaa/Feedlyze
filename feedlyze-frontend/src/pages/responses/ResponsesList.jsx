@@ -30,6 +30,7 @@ const ResponsesList = () => {
   const [loading, setLoading] = useState(true);
   const [responses, setResponses] = useState([]);
   const [surveys, setSurveys] = useState([]);
+  const [surveysLoaded, setSurveysLoaded] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -49,16 +50,29 @@ const ResponsesList = () => {
   }, []);
 
   useEffect(() => {
+    // Only fetch responses after surveys have been loaded
+    if (!surveysLoaded) return;
+    if (surveys.length === 0) {
+      setLoading(false);
+      return;
+    }
     fetchResponses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSurvey, selectedSentiment, pagination.page]);
+  }, [selectedSurvey, selectedSentiment, pagination.page, surveysLoaded]);
 
   const fetchSurveys = async () => {
     try {
       const response = await api.get('/surveys');
-      setSurveys(response.data.data || []);
+      const data = response.data.data || {};
+      // Handle both array and object formats
+      const surveysArray = Array.isArray(data) ? data : (data.surveys || []);
+      setSurveys(surveysArray);
+      setSurveysLoaded(true);
     } catch (error) {
       console.error('Failed to fetch surveys:', error);
+      setSurveys([]);
+      setSurveysLoaded(true);
+      setLoading(false);
     }
   };
 
@@ -66,26 +80,48 @@ const ResponsesList = () => {
     try {
       setLoading(true);
 
-      let endpoint = '/responses';
-      const params = new URLSearchParams();
-      params.append('page', pagination.page);
-      params.append('limit', pagination.limit);
+      // If "all" is selected, fetch from all surveys and combine
+      if (selectedSurvey === 'all') {
+        const allResponses = [];
+        // Fetch responses from each survey
+        for (const survey of surveys) {
+          try {
+            const response = await api.get(`/responses/survey/${survey.id}?page=1&pageSize=100`);
+            const data = response.data.data || {};
+            const surveyResponses = Array.isArray(data) ? data : (data.responses || []);
+            // Add survey title to each response
+            surveyResponses.forEach(r => {
+              r.survey_title = survey.title;
+            });
+            allResponses.push(...surveyResponses);
+          } catch (err) {
+            console.error(`Failed to fetch responses for survey ${survey.id}:`, err);
+          }
+        }
+        // Sort by submitted_at descending
+        allResponses.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+        setResponses(allResponses);
+        setPagination(prev => ({ ...prev, total: allResponses.length }));
+      } else {
+        // Fetch responses for specific survey
+        const params = new URLSearchParams();
+        params.append('page', pagination.page);
+        params.append('pageSize', pagination.limit);
 
-      if (selectedSurvey !== 'all') {
-        endpoint = `/responses/survey/${selectedSurvey}`;
-      }
+        if (selectedSentiment !== 'all') {
+          params.append('sentiment', selectedSentiment);
+        }
 
-      if (selectedSentiment !== 'all') {
-        params.append('sentiment', selectedSentiment);
-      }
-
-      const response = await api.get(`${endpoint}?${params.toString()}`);
-      setResponses(response.data.data || []);
-      if (response.data.pagination) {
-        setPagination((prev) => ({
-          ...prev,
-          total: response.data.pagination.total || 0,
-        }));
+        const response = await api.get(`/responses/survey/${selectedSurvey}?${params.toString()}`);
+        const data = response.data.data || {};
+        const responsesArray = Array.isArray(data) ? data : (data.responses || []);
+        setResponses(responsesArray);
+        if (data.pagination) {
+          setPagination((prev) => ({
+            ...prev,
+            total: data.pagination.total || 0,
+          }));
+        }
       }
     } catch (error) {
       console.error('Failed to fetch responses:', error);
@@ -102,7 +138,7 @@ const ResponsesList = () => {
       // For now, create a simple CSV from the current responses
       const headers = ['Date', 'Survey', 'Feedback', 'Sentiment Score', 'Sentiment'];
       const rows = responses.map((r) => [
-        new Date(r.created_at).toLocaleDateString(),
+        new Date(r.submitted_at).toLocaleDateString(),
         r.survey_title || 'N/A',
         `"${(r.feedback_text || '').replace(/"/g, '""')}"`,
         r.sentiment_score || 0,
@@ -260,7 +296,7 @@ const ResponsesList = () => {
                 <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t border-light-200 text-sm text-dark-500">
                   <span className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4" />
-                    {formatRelativeTime(response.created_at)}
+                    {formatRelativeTime(response.submitted_at)}
                   </span>
                   <span className="flex items-center gap-1.5">
                     {getDeviceIcon(response.device_type)}
@@ -289,24 +325,24 @@ const ResponsesList = () => {
                           <p className="text-sm text-dark-500 mb-1">
                             {answer.question_text}
                           </p>
-                          {answer.question_type === 'rating' ? (
+                          {answer.answer_type === 'rating' ? (
                             <div className="flex gap-1">
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <Star
                                   key={star}
                                   className={`w-5 h-5 ${
-                                    star <= Number(answer.answer_value)
+                                    star <= Number(answer.answer_rating)
                                       ? 'text-warning-500 fill-warning-500'
                                       : 'text-light-300'
                                   }`}
                                 />
                               ))}
                               <span className="text-dark-600 ml-2">
-                                ({answer.answer_value}/5)
+                                ({answer.answer_rating}/5)
                               </span>
                             </div>
                           ) : (
-                            <p className="text-dark-700">{answer.answer_value}</p>
+                            <p className="text-dark-700">{answer.answer_text || answer.answer_choice}</p>
                           )}
                         </div>
                       ))}

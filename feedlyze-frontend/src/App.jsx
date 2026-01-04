@@ -11,13 +11,16 @@ import { Login, Register } from './pages/auth';
 import { Dashboard } from './pages/dashboard';
 
 // Survey Pages
-import { SurveysList, SurveyBuilder, PublicSurvey } from './pages/surveys';
+import { SurveysList, SurveyBuilder, SurveyDetail, PublicSurvey } from './pages/surveys';
 
 // Response Pages
 import { ResponsesList, ResponseDetail } from './pages/responses';
 
 // Insights Pages
 import { Insights } from './pages/analytics';
+
+// AI Assistant
+import { AIAssistant } from './pages/ai-assistant';
 
 // Settings Pages
 import { Settings } from './pages/settings';
@@ -71,15 +74,18 @@ function App() {
               {/* Survey Routes */}
               <Route path="/surveys" element={<SurveysList />} />
               <Route path="/surveys/create" element={<SurveyBuilder />} />
-              <Route path="/surveys/:id" element={<SurveyBuilder />} />
+              <Route path="/surveys/:id" element={<SurveyDetail />} />
               <Route path="/surveys/:id/edit" element={<SurveyBuilder />} />
 
               {/* Response Routes */}
               <Route path="/responses" element={<ResponsesList />} />
               <Route path="/responses/:id" element={<ResponseDetail />} />
 
-              {/* Insights Routes */}
+              {/* Insights/Analytics Routes */}
               <Route path="/analytics" element={<Insights />} />
+
+              {/* AI Assistant Route */}
+              <Route path="/ai-assistant" element={<AIAssistant />} />
 
               {/* Settings Route */}
               <Route path="/settings" element={<Settings />} />

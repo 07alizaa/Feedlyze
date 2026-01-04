@@ -96,7 +96,7 @@ const ResponseDetail = () => {
             <div className="flex items-center gap-4 mt-2 text-dark-500">
               <span className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4" />
-                {new Date(response.created_at).toLocaleString()}
+                {new Date(response.submitted_at).toLocaleString()}
               </span>
               <span className="flex items-center gap-1.5">
                 {getDeviceIcon(response.device_type)}
@@ -204,14 +204,14 @@ const ResponseDetail = () => {
                   <p className="text-sm text-dark-500 mb-2">
                     Q{idx + 1}: {answer.question_text}
                   </p>
-                  {answer.question_type === 'rating' ? (
+                  {answer.answer_type === 'rating' ? (
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
                             className={`w-6 h-6 ${
-                              star <= Number(answer.answer_value)
+                              star <= Number(answer.answer_rating)
                                 ? 'text-warning-500 fill-warning-500'
                                 : 'text-light-300'
                             }`}
@@ -219,12 +219,12 @@ const ResponseDetail = () => {
                         ))}
                       </div>
                       <span className="text-dark-600 font-medium">
-                        ({answer.answer_value}/5)
+                        ({answer.answer_rating}/5)
                       </span>
                     </div>
                   ) : (
                     <p className="text-dark-800 font-medium">
-                      {answer.answer_value || '-'}
+                      {answer.answer_text || answer.answer_choice || '-'}
                     </p>
                   )}
                 </div>
@@ -248,13 +248,13 @@ const ResponseDetail = () => {
               <div className="flex justify-between">
                 <span className="text-dark-500">Submitted</span>
                 <span className="text-dark-700">
-                  {new Date(response.created_at).toLocaleDateString()}
+                  {new Date(response.submitted_at).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-dark-500">Time</span>
                 <span className="text-dark-700">
-                  {new Date(response.created_at).toLocaleTimeString()}
+                  {new Date(response.submitted_at).toLocaleTimeString()}
                 </span>
               </div>
               <div className="flex justify-between">

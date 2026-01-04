@@ -63,7 +63,7 @@ const Analytics = () => {
   const fetchSurveys = async () => {
     try {
       const response = await api.get('/surveys');
-      setSurveys(response.data.data || []);
+      setSurveys(response.data.data?.surveys || []);
     } catch (error) {
       console.error('Failed to fetch surveys:', error);
     }

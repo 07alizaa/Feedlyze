@@ -99,13 +99,21 @@ const PublicSurvey = () => {
     try {
       setSubmitting(true);
 
-      // Format answers for API
-      const formattedAnswers = survey.questions?.map((question) => ({
-        question_id: question.id,
-        answer_value: question.question_type === 'rating' 
-          ? String(answers[question.id]) 
-          : answers[question.id],
-      }));
+      // Format answers for API - use correct field names based on question type
+      const formattedAnswers = survey.questions?.map((question) => {
+        const answer = answers[question.id];
+        const base = { question_id: question.id };
+        
+        switch (question.question_type) {
+          case 'rating':
+            return { ...base, answer_rating: Number(answer) };
+          case 'mcq':
+            return { ...base, answer_choice: answer };
+          case 'text':
+          default:
+            return { ...base, answer_text: answer };
+        }
+      });
 
       await api.post('/responses/submit', {
         survey_id: survey.id,

@@ -110,6 +110,15 @@ class Response {
   }
 
   /**
+   * Get total count of responses for a business (across all surveys)
+   */
+  static async countByBusinessId(businessId) {
+    const sql = `SELECT COUNT(*) as total FROM responses WHERE business_id = $1`;
+    const result = await query(sql, [businessId]);
+    return parseInt(result.rows[0].total);
+  }
+
+  /**
    * Delete a response (also deletes answers due to CASCADE)
    */
   static async delete(id) {

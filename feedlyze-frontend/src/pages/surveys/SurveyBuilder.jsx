@@ -451,6 +451,7 @@ const SurveyBuilder = () => {
     if (isEditing) {
       fetchSurvey();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isEditing]);
 
   const fetchSurvey = async () => {
