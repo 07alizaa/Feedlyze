@@ -1,165 +1,230 @@
 import { motion } from 'framer-motion';
-import { Play, CheckCircle, ArrowRight, BarChart2, MessageSquare, TrendingUp } from 'lucide-react';
-import Button from '../common/Button'; // Assuming default export
+import { QrCode, Sparkles, BarChart3, Shield, ArrowRight, CheckCircle, Smartphone, FileText } from 'lucide-react';
+import Button from '../common/Button';
 
 const Hero = () => {
+  const processSteps = [
+    {
+      icon: QrCode,
+      title: "Digitize Feedback",
+      description: "Generate unique QR codes for physical locations to collect digital feedback"
+    },
+    {
+      icon: Sparkles,
+      title: "AI Analysis",
+      description: "Automatically analyze sentiment and categorize responses"
+    },
+    {
+      icon: BarChart3,
+      title: "Actionable Insights",
+      description: "View organized feedback trends in your dashboard"
+    }
+  ];
+
   return (
-    <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-gradient-to-b from-primary-50 to-white">
-      {/* Background Decorations */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-        <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary-200 rounded-full blur-3xl opacity-30"></div>
-        <div className="absolute top-1/2 -right-24 w-80 h-80 bg-success-200 rounded-full blur-3xl opacity-30"></div>
+    <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden bg-gradient-to-b from-white to-light-50">
+      {/* Background Elements - Subtle grid pattern */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 opacity-5">
+        <div className="absolute top-1/4 -left-12 w-64 h-64 bg-primary-100 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 -right-12 w-64 h-64 bg-success-100 rounded-full blur-3xl"></div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
-
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          
           {/* Text Content */}
           <div className="flex-1 text-center lg:text-left">
-            <motion.h1
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="text-4xl lg:text-6xl font-extrabold text-dark-900 leading-tight tracking-tight mb-6"
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-sm font-medium mb-6"
             >
-              Transform Paper <br className="hidden lg:block" />
-              <span className="text-primary-600">Feedback</span> Into <br className="hidden lg:block" />
-              <span className="text-success-600">Actionable Insights</span>
+              <Shield className="w-4 h-4" />
+              GDPR Compliant Feedback Collection
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl lg:text-5xl xl:text-6xl font-bold text-dark-900 leading-tight tracking-tight mb-6"
+            >
+              From Paper Feedback to{' '}
+              <span className="text-primary-600">Digital Insights</span>
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-lg lg:text-xl text-dark-500 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-lg lg:text-xl text-dark-600 mb-8 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
             >
-              AI-powered feedback analysis that helps businesses understand their customers and grow faster. No more manual data entry.
+              Feedlyze helps businesses digitize paper-based feedback using QR codes, analyze responses with AI, and turn customer insights into actionable improvements.
             </motion.p>
+
+            {/* Process Steps - Mobile View */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-col gap-4 mb-8 lg:hidden"
+            >
+              {processSteps.map((step, index) => (
+                <div key={step.title} className="flex items-start gap-4 p-4 bg-white rounded-xl border border-light-200 shadow-card">
+                  <div className={`p-3 rounded-lg ${index === 0 ? 'bg-primary-50 text-primary-600' : index === 1 ? 'bg-success-50 text-success-600' : 'bg-warning-50 text-warning-600'}`}>
+                    <step.icon className="w-6 h-6" />
+                  </div>
+                  <div className="text-left">
+                    <h3 className="font-semibold text-dark-900 mb-1">{step.title}</h3>
+                    <p className="text-sm text-dark-500">{step.description}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-10"
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-8"
             >
-              <Button size="xl" variant="primary" className="w-full sm:w-auto shadow-xl shadow-primary-500/20">
-                Use Feedlyze Free <ArrowRight className="ml-2 w-5 h-5" />
+              <Button size="xl" variant="primary" className="w-full sm:w-auto">
+                Create Your First Survey
+                <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button size="xl" variant="ghost" className="w-full sm:w-auto text-dark-600 hover:bg-white/50 border border-transparent hover:border-light-300">
-                <Play className="mr-2 w-5 h-5 fill-current" /> Watch Demo
+              <Button size="xl" variant="outline" className="w-full sm:w-auto text-dark-600 border-light-300">
+                See How It Works
               </Button>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-sm font-medium text-dark-500"
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="flex flex-wrap justify-center lg:justify-start gap-4 text-sm font-medium text-dark-500"
             >
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-success-500" />
-                <span>No credit card required</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-light-200 rounded-lg">
+                <CheckCircle className="w-4 h-4 text-success-500" />
+                <span>No manual data entry</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-success-500" />
-                <span>Setup in 5 minutes</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-light-200 rounded-lg">
+                <CheckCircle className="w-4 h-4 text-success-500" />
+                <span>Privacy-first collection</span>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-success-500" />
-                <span>Trusted by 500+ businesses</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-light-200 rounded-lg">
+                <CheckCircle className="w-4 h-4 text-success-500" />
+                <span>Export your data anytime</span>
               </div>
             </motion.div>
           </div>
 
-          {/* Visual Mockup - Dashboard Illusion */}
-          <div className="flex-1 w-full max-w-lg lg:max-w-none relative perspective-1000">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, rotateY: 10, rotateX: 5 }}
-              animate={{ opacity: 1, scale: 1, rotateY: -10, rotateX: 5 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative bg-white rounded-2xl shadow-2xl border border-light-200 p-4 lg:p-6 transform transition-transform hover:rotate-0 duration-500"
-              style={{ transformStyle: 'preserve-3d', transform: 'perspective(1000px) rotateY(-12deg) rotateX(6deg)' }}
-            >
-              {/* Fake Dashboard Header */}
-              <div className="flex items-center justify-between mb-6 border-b border-light-100 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 font-bold">F</div>
-                  <div className="font-bold text-dark-900">Dashboard</div>
-                </div>
-                <div className="flex gap-2">
-                  <div className="w-24 h-8 bg-light-100 rounded animate-pulse"></div>
-                  <div className="w-8 h-8 bg-light-100 rounded-full"></div>
-                </div>
-              </div>
-
-              {/* Fake Charts */}
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-primary-50/50 p-4 rounded-xl border border-primary-100">
-                  <div className="flex items-center gap-2 mb-2 text-primary-700 font-medium text-sm">
-                    <TrendingUp className="w-4 h-4" /> Sentiment Score
-                  </div>
-                  <div className="text-3xl font-bold text-dark-900">+0.85</div>
-                  <div className="text-xs text-success-600 font-medium flex items-center mt-1">
-                    ↑ 12% this week
-                  </div>
-                </div>
-                <div className="bg-success-50/50 p-4 rounded-xl border border-success-100">
-                  <div className="flex items-center gap-2 mb-2 text-success-700 font-medium text-sm">
-                    <MessageSquare className="w-4 h-4" /> New Responses
-                  </div>
-                  <div className="text-3xl font-bold text-dark-900">128</div>
-                  <div className="text-xs text-success-600 font-medium flex items-center mt-1">
-                    ↑ 24 today
-                  </div>
-                </div>
-              </div>
-
-              {/* Fake List */}
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 bg-light-50 rounded-lg border border-light-100">
-                    <div className="w-8 h-8 rounded-full bg-light-200 flex-shrink-0"></div>
-                    <div className="flex-1 space-y-1">
-                      <div className="h-4 bg-light-200 rounded w-3/4"></div>
-                      <div className="h-3 bg-light-200 rounded w-1/2"></div>
+          {/* Visual Representation - Realistic Process Flow */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="flex-1 w-full max-w-lg lg:max-w-none"
+          >
+            <div className="relative bg-white rounded-2xl shadow-card p-6 border border-light-200">
+              
+              {/* Process Steps - Desktop View */}
+              <div className="hidden lg:flex flex-col gap-6 mb-8">
+                {processSteps.map((step, index) => (
+                  <motion.div
+                    key={step.title}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+                    className="flex items-center gap-4"
+                  >
+                    <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ${index === 0 ? 'bg-primary-50 text-primary-600' : index === 1 ? 'bg-success-50 text-success-600' : 'bg-warning-50 text-warning-600'}`}>
+                      <step.icon className="w-6 h-6" />
                     </div>
-                    <div className={`px-2 py-1 rounded text-xs font-medium ${i === 1 ? 'bg-success-100 text-success-700' : 'bg-primary-100 text-primary-700'}`}>
-                      {i === 1 ? 'Positive' : 'Neutral'}
+                    <div>
+                      <h3 className="font-semibold text-dark-900 mb-1">{step.title}</h3>
+                      <p className="text-sm text-dark-500">{step.description}</p>
                     </div>
-                  </div>
+                    {index < 2 && (
+                      <div className="ml-auto text-dark-300">
+                        <ArrowRight className="w-5 h-5" />
+                      </div>
+                    )}
+                  </motion.div>
                 ))}
               </div>
 
-              {/* Floating Elements Animations */}
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                className="absolute -right-8 top-20 bg-white p-3 rounded-xl shadow-lg border border-light-200 flex items-center gap-3 z-20"
-              >
-                <div className="bg-primary-100 p-2 rounded-lg">
-                  <BarChart2 className="w-5 h-5 text-primary-600" />
+              {/* QR Code Generation Example */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-dark-900">How It Works</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-light-50 rounded-lg border border-light-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+                        <Smartphone className="w-5 h-5 text-primary-600" />
+                      </div>
+                      <span className="font-medium text-dark-900">Scan QR Code</span>
+                    </div>
+                    <p className="text-sm text-dark-500">Customers scan your unique QR code to submit feedback digitally</p>
+                  </div>
+                  
+                  <div className="p-4 bg-light-50 rounded-lg border border-light-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-success-100 flex items-center justify-center">
+                        <FileText className="w-5 h-5 text-success-600" />
+                      </div>
+                      <span className="font-medium text-dark-900">Digital Responses</span>
+                    </div>
+                    <p className="text-sm text-dark-500">Feedback collected instantly in your dashboard, no paper handling</p>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs text-dark-500">Analysis Complete</div>
-                  <div className="text-sm font-bold text-dark-900">Insight Ready</div>
+                
+                {/* Simple QR Visualization */}
+                <div className="mt-6 p-4 border border-light-200 rounded-lg bg-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-dark-700">Your Feedback QR Code</span>
+                    <span className="text-xs text-primary-600 font-medium">Ready to print</span>
+                  </div>
+                  <div className="flex justify-center p-4 bg-light-50 rounded-lg">
+                    <div className="relative">
+                      {/* Abstract QR representation */}
+                      <div className="w-32 h-32 bg-gradient-to-br from-primary-50 to-primary-100 border-2 border-primary-200 rounded-lg">
+                        <div className="absolute top-3 left-3 w-6 h-6 bg-primary-500 rounded-sm"></div>
+                        <div className="absolute top-3 right-3 w-6 h-6 bg-primary-500 rounded-sm"></div>
+                        <div className="absolute bottom-3 left-3 w-6 h-6 bg-primary-500 rounded-sm"></div>
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-8 h-8 bg-white rounded-sm"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-xs text-center text-dark-500 mt-3">
+                    Place this code anywhere to collect digital feedback
+                  </p>
                 </div>
-              </motion.div>
+              </div>
 
-              <motion.div
-                animate={{ y: [0, 10, 0] }}
-                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
-                className="absolute -left-6 bottom-32 bg-white p-3 rounded-xl shadow-lg border border-light-200 flex items-center gap-3 z-20"
-              >
-                <div className="bg-success-100 p-2 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-success-600" />
+              {/* Simple Stats - Truthful representation */}
+              <div className="mt-6 pt-6 border-t border-light-200">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-dark-900">1</div>
+                    <div className="text-dark-500">QR Code</div>
+                  </div>
+                  <div className="h-8 w-px bg-light-300"></div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-dark-900">∞</div>
+                    <div className="text-dark-500">Responses</div>
+                  </div>
+                  <div className="h-8 w-px bg-light-300"></div>
+                  <div className="text-center">
+                    <div className="text-lg font-semibold text-dark-900">0</div>
+                    <div className="text-dark-500">Paper Waste</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-xs text-dark-500">New Feedback</div>
-                  <div className="text-sm font-bold text-dark-900">Just Now</div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>

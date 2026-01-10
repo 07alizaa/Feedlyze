@@ -40,8 +40,11 @@ const SurveysList = () => {
     try {
       setLoading(true);
       const response = await api.get('/surveys');
+      console.log('API Response:', response.data); // DEBUG
       const surveysData = response.data.data || {};
-      setSurveys(Array.isArray(surveysData) ? surveysData : (surveysData.surveys || []));
+      const surveysList = Array.isArray(surveysData) ? surveysData : (surveysData.surveys || []);
+      console.log('Surveys with QR codes:', surveysList.map(s => ({ id: s.id, title: s.title, qr_code_url: s.qr_code_url ? 'EXISTS' : 'NULL' }))); // DEBUG
+      setSurveys(surveysList);
     } catch (error) {
       toast.error('Failed to load surveys');
       console.error('Error fetching surveys:', error);

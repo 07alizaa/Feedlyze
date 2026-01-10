@@ -127,18 +127,19 @@ class Survey {
   /**
    * Update survey
    */
-  static async update(id, businessId, { title, description, is_active }) {
+  static async update(id, businessId, { title, description, is_active, qr_code_url }) {
     const sql = `
       UPDATE surveys
       SET 
         title = COALESCE($1, title),
         description = COALESCE($2, description),
-        is_active = COALESCE($3, is_active)
-      WHERE id = $4 AND business_id = $5
+        is_active = COALESCE($3, is_active),
+        qr_code_url = COALESCE($4, qr_code_url)
+      WHERE id = $5 AND business_id = $6
       RETURNING *
     `;
 
-    const values = [title, description, is_active, id, businessId];
+    const values = [title, description, is_active, qr_code_url, id, businessId];
     const result = await query(sql, values);
     return result.rows[0];
   }

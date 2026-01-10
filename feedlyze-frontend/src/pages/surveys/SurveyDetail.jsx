@@ -62,7 +62,8 @@ const SurveyDetail = () => {
     }
   };
 
-  const baseUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
+  // Ngrok/dynamic logic removed; use only VITE_FRONTEND_URL
+  const baseUrl = import.meta.env.VITE_FRONTEND_URL;
   const publicUrl = survey ? `${baseUrl}/s/${survey.short_code}` : '';
 
   if (loading) {
@@ -76,6 +77,10 @@ const SurveyDetail = () => {
   if (!survey) {
     return null;
   }
+
+  // Determine if analysis is ready: must have at least one response and avg_sentiment is a number
+  const totalResponses = survey?.response_count || 0;
+  const analysisReady = totalResponses > 0 && typeof survey?.avg_sentiment === 'number' && !isNaN(survey.avg_sentiment);
 
   return (
     <div className="space-y-6">
@@ -138,7 +143,7 @@ const SurveyDetail = () => {
             <div>
               <p className="text-sm text-dark-500">Total Responses</p>
               <p className="text-2xl font-bold text-dark-900">
-                {survey.response_count || 0}
+                {totalResponses}
               </p>
             </div>
           </div>
@@ -152,7 +157,9 @@ const SurveyDetail = () => {
             <div>
               <p className="text-sm text-dark-500">Avg Rating</p>
               <p className="text-2xl font-bold text-dark-900">
-                {survey.avg_rating ? Number(survey.avg_rating).toFixed(1) : '-'}
+                {analysisReady && survey.avg_rating !== undefined && survey.avg_rating !== null
+                  ? Number(survey.avg_rating).toFixed(1)
+                  : (totalResponses > 0 ? 'Analysis not ready' : '-')}
               </p>
             </div>
           </div>
@@ -166,9 +173,9 @@ const SurveyDetail = () => {
             <div>
               <p className="text-sm text-dark-500">Avg Sentiment</p>
               <p className="text-2xl font-bold text-dark-900">
-                {survey.avg_sentiment !== null && survey.avg_sentiment !== undefined
+                {analysisReady
                   ? formatSentimentScore(survey.avg_sentiment)
-                  : '-'}
+                  : (totalResponses > 0 ? 'Analysis not ready' : '-')}
               </p>
             </div>
           </div>
@@ -280,35 +287,63 @@ const SurveyDetail = () => {
               </Link>
             </div>
 
-            {recentResponses.length === 0 ? (
-              <p className="text-center text-dark-400 py-4">
-                No responses yet
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {recentResponses.map((response) => {
-                  const sentiment = getSentimentFromScore(response.sentiment_score || 0);
+            {(() => {
+              // Move strict filtering directly into render block
+              const validAnalyzedResponses = [];
+              let hasAnyResponses = false;
+              for (const r of recentResponses) {
+                if (Array.isArray(r.answers) && r.answers.length > 0) {
+                  hasAnyResponses = true;
+                  if (typeof r.sentiment_score === 'number' && !isNaN(r.sentiment_score)) {
+                    validAnalyzedResponses.push(r);
+                  }
+                }
+              }
+
+              if (validAnalyzedResponses.length === 0) {
+                if (hasAnyResponses) {
                   return (
-                    <div
-                      key={response.id}
-                      className="p-3 bg-light-50 rounded-lg"
-                    >
-                      <p className="text-sm text-dark-600 line-clamp-2">
-                        Response #{response.id} - {response.answer_count || 0} answers
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <Badge variant={sentiment.color} size="sm">
-                          {sentiment.emoji}
-                        </Badge>
-                        <span className="text-xs text-dark-400">
-                          {formatRelativeTime(response.submitted_at)}
-                        </span>
-                      </div>
-                    </div>
+                    <p className="text-center text-dark-400 py-4">
+                      Responses received. Analysis in progress.
+                    </p>
                   );
-                })}
-              </div>
-            )}
+                }
+                return (
+                  <p className="text-center text-dark-400 py-4">
+                    No analyzed responses yet
+                  </p>
+                );
+              }
+              return (
+                <div className="space-y-3">
+                  {validAnalyzedResponses.map((response) => {
+                    // Only render if sentiment_score is a valid number (no fallback, no emoji otherwise)
+                    if (!Array.isArray(response.answers) || response.answers.length === 0) return null;
+                    if (typeof response.sentiment_score !== 'number' || isNaN(response.sentiment_score)) return null;
+                    const sentiment = getSentimentFromScore(response.sentiment_score);
+                    if (!sentiment || !sentiment.emoji) return null;
+                    return (
+                      <div
+                        key={response.id}
+                        className="p-3 bg-light-50 rounded-lg"
+                      >
+                        <p className="text-sm text-dark-600 line-clamp-2">
+                          Response #{response.id} - {response.answers.length} answers
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <Badge variant={sentiment.color} size="sm">
+                            {sentiment.emoji}
+                          </Badge>
+                          <span className="text-xs text-dark-400">
+                            {formatRelativeTime(response.submitted_at)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </Card>
 
           {/* Actions */}

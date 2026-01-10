@@ -15,6 +15,24 @@ CREATE TABLE businesses (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
+-- =====================================================
+-- TABLE 1.5: PASSWORD_RESET_TOKENS
+-- =====================================================
+CREATE TABLE password_reset_tokens (
+    id SERIAL PRIMARY KEY,
+    business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+    token_hash VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for password reset tokens
+CREATE INDEX idx_password_reset_tokens_business_id ON password_reset_tokens(business_id);
+CREATE INDEX idx_password_reset_tokens_token_hash ON password_reset_tokens(token_hash);
+
+
 -- =====================================================
 -- TABLE 2: SURVEYS
 -- =====================================================

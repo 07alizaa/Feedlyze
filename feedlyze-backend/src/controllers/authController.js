@@ -1,6 +1,10 @@
+
+
 // src/controllers/authController.js
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const Business = require('../models/Business');
+const PasswordResetToken = require('../models/PasswordResetToken');
 const logger = require('../utils/logger');
 const { JWT_EXPIRES_IN } = require('../utils/constants');
 
@@ -73,6 +77,7 @@ const login = async (req, res, next) => {
     const business = await Business.findByEmail(email);
 
     if (!business) {
+      logger.warn(`Login failed: No business found for email: ${email}`);
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password'
@@ -83,6 +88,7 @@ const login = async (req, res, next) => {
     const isPasswordValid = await Business.verifyPassword(password, business.password_hash);
 
     if (!isPasswordValid) {
+      logger.warn(`Login failed: Invalid password for email: ${email}`);
       return res.status(401).json({
         success: false,
         error: 'Invalid email or password'
@@ -93,7 +99,23 @@ const login = async (req, res, next) => {
     delete business.password_hash;
 
     // Generate JWT token
-    const token = generateToken(business.id);
+    let token;
+    try {
+      token = generateToken(business.id);
+    } catch (jwtError) {
+      logger.error('JWT generation error during login', {
+        email,
+        businessId: business.id,
+        jwtError: jwtError.message,
+        stack: jwtError.stack,
+        envJwtSecret: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+        jwtExpiresIn: process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error (token)'
+      });
+    }
 
     logger.info(`Business logged in: ${email}`);
 
@@ -106,10 +128,81 @@ const login = async (req, res, next) => {
       }
     });
   } catch (error) {
-    logger.error('Login error:', error);
+    logger.error('Login error', {
+      error: error.message,
+      stack: error.stack,
+      requestBody: req.body,
+      envJwtSecret: process.env.JWT_SECRET ? 'SET' : 'NOT SET',
+      jwtExpiresIn: process.env.JWT_EXPIRES_IN || JWT_EXPIRES_IN
+    });
     next(error);
   }
 };
+
+/**
+ * Handle forgot password request
+ * POST /api/auth/forgot-password
+ */
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const business = await Business.findByEmail(email);
+
+    if (business) {
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      await PasswordResetToken.create(business.id, resetToken);
+
+      // In a real application, you would send an email with the resetToken.
+      // For this implementation, we'll log it for development purposes.
+      logger.info(`Password reset token for ${email}: ${resetToken}`);
+    }
+
+    // Always return a success response to prevent user enumeration
+    res.status(200).json({
+      success: true,
+      message: 'If an account with that email exists, a password reset link has been sent.',
+    });
+  } catch (error) {
+    logger.error('Forgot password error:', error);
+    next(error);
+  }
+};
+
+/**
+ * Handle password reset
+ * POST /api/auth/reset-password
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ success: false, error: 'Token and password are required' });
+    }
+
+    const tokenRecord = await PasswordResetToken.findByToken(token);
+
+    if (!tokenRecord || tokenRecord.used_at) {
+      return res.status(400).json({ success: false, error: 'Token is invalid or has already been used' });
+    }
+
+    const isExpired = new Date() > new Date(tokenRecord.expires_at);
+    if (isExpired) {
+      return res.status(400).json({ success: false, error: 'Token has expired' });
+    }
+
+    await Business.updatePassword(tokenRecord.business_id, password);
+    await PasswordResetToken.markAsUsed(tokenRecord.id);
+
+    logger.info(`Password has been reset for business ID: ${tokenRecord.business_id}`);
+
+    res.status(200).json({ success: true, message: 'Password has been reset successfully' });
+  } catch (error) {
+    logger.error('Reset password error:', error);
+    next(error);
+  }
+};
+
 
 /**
  * Get current business profile
@@ -165,9 +258,42 @@ const updateProfile = async (req, res, next) => {
   }
 };
 
+/**
+ * Handle Google OAuth callback
+ * GET /api/auth/google/callback
+ */
+const googleCallback = async (req, res, next) => {
+  try {
+    const business = req.user;
+    const token = generateToken(business.id);
+
+    logger.info(`Google login successful: ${business.email}`);
+
+    // NOTE: In a production SPA, you would typically redirect to the frontend
+    // with the token in the URL, e.g.:
+    // return res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
+    
+    // Returning JSON to match strict output requirements
+    res.status(200).json({
+      success: true,
+      message: 'Google login successful',
+      data: {
+        business,
+        token
+      }
+    });
+  } catch (error) {
+    logger.error('Google login error:', error);
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   getProfile,
-  updateProfile
+  updateProfile,
+  googleCallback,
+  forgotPassword,
+  resetPassword,
 };

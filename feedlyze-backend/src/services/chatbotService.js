@@ -271,7 +271,8 @@ const createSurveyFromChat = async (businessId, surveyData) => {
     const shortCode = Math.random().toString(36).substring(2, 8);
     
     // Generate QR code
-    const publicUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/s/${shortCode}`;
+    // Ngrok/dynamic host logic removed; use only FRONTEND_URL
+    const publicUrl = `${process.env.FRONTEND_URL}/s/${shortCode}`;
     const qrCodeUrl = await generateQRCode(publicUrl);
 
     // Create survey

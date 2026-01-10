@@ -37,9 +37,8 @@ const MetricCard = ({ title, value, change, changeType, icon: Icon, color }) => 
                 <ArrowDownRight className="w-4 h-4 text-danger-500" />
               )}
               <span
-                className={`text-sm font-medium ${
-                  changeType === 'increase' ? 'text-success-600' : 'text-danger-600'
-                }`}
+                className={`text-sm font-medium ${changeType === 'increase' ? 'text-success-600' : 'text-danger-600'
+                  }`}
               >
                 {change}
               </span>
@@ -78,7 +77,7 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch overview stats
       const [overviewRes, surveysRes] = await Promise.all([
         api.get('/insights/overview').catch(() => ({ data: { data: {} } })),
@@ -112,8 +111,8 @@ const Dashboard = () => {
           const responsesRes = await api.get(`/responses/survey/${surveys[0].id}?limit=5`);
           const responsesData = responsesRes.data.data || {};
           // Handle both array and object with responses property
-          const responses = Array.isArray(responsesData) 
-            ? responsesData 
+          const responses = Array.isArray(responsesData)
+            ? responsesData
             : (responsesData.responses || []);
           setRecentResponses(responses);
         } catch (_e) {
@@ -169,8 +168,6 @@ const Dashboard = () => {
         <MetricCard
           title="Total Responses"
           value={stats.totalResponses}
-          change="+12%"
-          changeType="increase"
           icon={MessageSquare}
           color="warning"
         />
@@ -193,7 +190,7 @@ const Dashboard = () => {
                 View all →
               </Link>
             </div>
-            
+
             {recentResponses.length === 0 ? (
               <div className="p-8 text-center">
                 <MessageSquare className="w-12 h-12 text-dark-300 mx-auto mb-3" />
@@ -248,7 +245,7 @@ const Dashboard = () => {
                   <p className="text-xs text-dark-500">Start collecting feedback</p>
                 </div>
               </Link>
-              
+
               <Link
                 to="/analytics"
                 className="flex items-center gap-3 p-3 bg-light-50 rounded-lg hover:bg-light-100 transition-colors"
@@ -280,7 +277,7 @@ const Dashboard = () => {
                 <div className="w-full bg-light-200 rounded-full h-2">
                   <div className="bg-success-500 h-2 rounded-full" style={{ width: `${sentimentBreakdown.positive}%` }} />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-dark-600">Neutral</span>
                   <span className="text-sm font-medium text-warning-600">{sentimentBreakdown.neutral}%</span>
@@ -288,7 +285,7 @@ const Dashboard = () => {
                 <div className="w-full bg-light-200 rounded-full h-2">
                   <div className="bg-warning-500 h-2 rounded-full" style={{ width: `${sentimentBreakdown.neutral}%` }} />
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-dark-600">Negative</span>
                   <span className="text-sm font-medium text-danger-600">{sentimentBreakdown.negative}%</span>

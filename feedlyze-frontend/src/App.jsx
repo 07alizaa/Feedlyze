@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { DashboardLayout, ProtectedRoute } from './components/layout';
 
 // Auth Pages
-import { Login, Register } from './pages/auth';
+import { Login, Register, ForgotPassword, ResetPassword } from './pages/auth';
 
 // Dashboard Pages
 import { Dashboard } from './pages/dashboard';
@@ -65,6 +65,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected Routes */}
           <Route element={<ProtectedRoute />}>

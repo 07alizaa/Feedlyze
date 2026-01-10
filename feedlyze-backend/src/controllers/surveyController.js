@@ -85,10 +85,16 @@ const getSurveys = async (req, res, next) => {
 
     const surveys = await Survey.findByBusinessId(businessId, { limit, offset });
 
+    // Add public_url to each survey
+    const surveysWithUrls = surveys.map(survey => ({
+      ...survey,
+      public_url: QRService.getSurveyURL(survey.short_code)
+    }));
+
     res.status(200).json({
       success: true,
       data: {
-        surveys,
+        surveys: surveysWithUrls,
         pagination: {
           page,
           pageSize: limit,

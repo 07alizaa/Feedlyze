@@ -135,6 +135,69 @@ class Business {
       active_surveys: 0
     };
   }
+
+  /**
+   * Update password hash
+   * @param {number} id
+   * @param {string} newPassword
+   * @returns {Promise<boolean>}
+   */
+  static async updatePassword(id, newPassword) {
+    const password_hash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+    const sql = `UPDATE businesses SET password_hash = $1 WHERE id = $2`;
+    const result = await query(sql, [password_hash, id]);
+    return result.rowCount > 0;
+  }
+
+  /**
+   * Find business by Google ID
+   * @param {string} googleId
+   * @returns {Promise<Object|null>}
+   */
+  static async findByGoogleId(googleId) {
+    const sql = `
+      SELECT id, business_name, email, industry, phone, created_at, auth_provider
+      FROM businesses
+      WHERE google_id = $1
+    `;
+    const result = await query(sql, [googleId]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Link existing account to Google
+   * @param {number} id
+   * @param {string} googleId
+   * @returns {Promise<Object>}
+   */
+  static async linkGoogleAccount(id, googleId) {
+    const sql = `
+      UPDATE businesses
+      SET 
+        google_id = $1,
+        auth_provider = 'google',
+        email_verified = true
+      WHERE id = $2
+      RETURNING id, business_name, email, industry, phone, created_at
+    `;
+    const result = await query(sql, [googleId, id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Create new business with Google
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  static async createGoogleUser({ business_name, email, google_id, email_verified }) {
+    const sql = `
+      INSERT INTO businesses (business_name, email, google_id, auth_provider, email_verified)
+      VALUES ($1, $2, $3, 'google', $4)
+      RETURNING id, business_name, email, industry, phone, created_at
+    `;
+    const result = await query(sql, [business_name, email, google_id, email_verified]);
+    return result.rows[0];
+  }
 }
 
 module.exports = Business;

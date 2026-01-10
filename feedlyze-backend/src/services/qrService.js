@@ -71,7 +71,8 @@ class QRService {
    * @returns {string} - Full survey URL
    */
   static getSurveyURL(shortCode) {
-    const baseURL = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // Ngrok/dynamic host logic removed; use only FRONTEND_URL
+    const baseURL = process.env.FRONTEND_URL;
     return `${baseURL}/s/${shortCode}`;
   }
 

@@ -59,9 +59,11 @@ export const formatPercentage = (value, decimals = 1) => {
  * Format sentiment score (e.g., +0.65 or -0.32)
  */
 export const formatSentimentScore = (score) => {
-  if (score === null || score === undefined) return '0.00';
-  const prefix = score >= 0 ? '+' : '';
-  return `${prefix}${score.toFixed(2)}`;
+  if (score === null || score === undefined || score === '') return '0.00';
+  const num = typeof score === 'number' ? score : Number(score);
+  if (isNaN(num)) return '0.00';
+  const prefix = num >= 0 ? '+' : '';
+  return `${prefix}${num.toFixed(2)}`;
 };
 
 /**

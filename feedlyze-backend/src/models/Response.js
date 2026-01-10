@@ -62,23 +62,58 @@ class Response {
   }
 
   /**
-   * Get all responses for a survey
+   * Get all responses for a survey with answers and AI analysis
    */
   static async findBySurveyId(surveyId, { limit = 50, offset = 0 } = {}) {
+    // First get the responses with AI analysis data
     const sql = `
-      SELECT 
+      SELECT DISTINCT ON (r.id)
         r.*,
-        COUNT(a.id) as answer_count
+        ai.sentiment_score,
+        ai.sentiment_label
       FROM responses r
-      LEFT JOIN answers a ON r.id = a.response_id
+      LEFT JOIN ai_analysis ai ON r.id = ai.response_id
       WHERE r.survey_id = $1
-      GROUP BY r.id
-      ORDER BY r.submitted_at DESC
+      ORDER BY r.id, r.submitted_at DESC
+    `;
+
+    // Use a subquery to properly order results
+    const orderedSql = `
+      SELECT * FROM (${sql}) sub
+      ORDER BY submitted_at DESC
       LIMIT $2 OFFSET $3
     `;
 
-    const result = await query(sql, [surveyId, limit, offset]);
-    return result.rows;
+    const result = await query(orderedSql, [surveyId, limit, offset]);
+    const responses = result.rows;
+
+    // Get all answers for these responses
+    if (responses.length > 0) {
+      const responseIds = responses.map(r => r.id);
+      const answersResult = await query(
+        `SELECT * FROM answers WHERE response_id = ANY($1) ORDER BY response_id, id ASC`,
+        [responseIds]
+      );
+
+      // Group answers by response_id
+      const answersByResponse = {};
+      answersResult.rows.forEach(answer => {
+        if (!answersByResponse[answer.response_id]) {
+          answersByResponse[answer.response_id] = [];
+        }
+        answersByResponse[answer.response_id].push(answer);
+      });
+
+      // Attach answers to responses and extract feedback_text
+      responses.forEach(response => {
+        response.answers = answersByResponse[response.id] || [];
+        // Extract the first text answer as feedback_text for display
+        const textAnswer = response.answers.find(a => a.answer_type === 'text' && a.answer_text);
+        response.feedback_text = textAnswer ? textAnswer.answer_text : null;
+      });
+    }
+
+    return responses;
   }
 
   /**
@@ -91,22 +126,53 @@ class Response {
   }
 
   /**
-   * Get all responses for a business (across all surveys)
+   * Get all responses for a business (across all surveys) with answers and AI analysis
    */
   static async findByBusinessId(businessId, { limit = 50, offset = 0 } = {}) {
     const sql = `
       SELECT 
         r.*,
-        s.title as survey_title
+        s.title as survey_title,
+        ai.sentiment_score,
+        ai.sentiment_label
       FROM responses r
       JOIN surveys s ON r.survey_id = s.id
+      LEFT JOIN ai_analysis ai ON r.id = ai.response_id
       WHERE r.business_id = $1
       ORDER BY r.submitted_at DESC
       LIMIT $2 OFFSET $3
     `;
 
     const result = await query(sql, [businessId, limit, offset]);
-    return result.rows;
+    const responses = result.rows;
+
+    // Get all answers for these responses
+    if (responses.length > 0) {
+      const responseIds = responses.map(r => r.id);
+      const answersResult = await query(
+        `SELECT * FROM answers WHERE response_id = ANY($1) ORDER BY response_id, id ASC`,
+        [responseIds]
+      );
+
+      // Group answers by response_id
+      const answersByResponse = {};
+      answersResult.rows.forEach(answer => {
+        if (!answersByResponse[answer.response_id]) {
+          answersByResponse[answer.response_id] = [];
+        }
+        answersByResponse[answer.response_id].push(answer);
+      });
+
+      // Attach answers to responses and extract feedback_text
+      responses.forEach(response => {
+        response.answers = answersByResponse[response.id] || [];
+        // Extract the first text answer as feedback_text for display
+        const textAnswer = response.answers.find(a => a.answer_type === 'text' && a.answer_text);
+        response.feedback_text = textAnswer ? textAnswer.answer_text : null;
+      });
+    }
+
+    return responses;
   }
 
   /**

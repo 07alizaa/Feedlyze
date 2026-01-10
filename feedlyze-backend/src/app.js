@@ -12,10 +12,12 @@ const app = express();
 // ==========================================
 
 // CORS - Allow frontend to make requests
+// Ngrok and dynamic host logic removed for production
 const allowedOrigins = [
+  process.env.FRONTEND_URL,
   'http://localhost:3000',
   'http://localhost:5173',
-  process.env.FRONTEND_URL
+  'http://127.0.0.1:5173'
 ].filter(Boolean);
 
 app.use(cors({

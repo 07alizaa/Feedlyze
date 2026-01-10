@@ -174,7 +174,9 @@ const ResponsesList = () => {
     }
   };
 
-  const filteredResponses = responses.filter((response) => {
+  // Only include responses with answers and answers.length > 0
+  const validResponses = responses.filter(r => Array.isArray(r.answers) && r.answers.length > 0);
+  const filteredResponses = validResponses.filter((response) => {
     if (!searchQuery) return true;
     const text = (response.feedback_text || '').toLowerCase();
     return text.includes(searchQuery.toLowerCase());
@@ -239,6 +241,12 @@ const ResponsesList = () => {
         <div className="flex items-center justify-center h-64">
           <Spinner size="lg" />
         </div>
+      ) : surveys.length === 0 ? (
+        <EmptyState
+          icon={MessageSquare}
+          title="No surveys found"
+          description="Create a survey to start collecting responses."
+        />
       ) : filteredResponses.length === 0 ? (
         <EmptyState
           icon={MessageSquare}
@@ -252,7 +260,8 @@ const ResponsesList = () => {
       ) : (
         <div className="space-y-4">
           {filteredResponses.map((response) => {
-            const sentiment = getSentimentFromScore(response.sentiment_score || 0);
+            // Only show sentiment if AI analysis exists and is complete (sentiment_score is a number)
+            const showSentiment = typeof response.sentiment_score === 'number' && !isNaN(response.sentiment_score);
             const isExpanded = expandedResponse === response.id;
 
             return (
@@ -267,12 +276,16 @@ const ResponsesList = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
-                      <Badge variant={sentiment.color}>
-                        {sentiment.emoji} {sentiment.label}
-                      </Badge>
-                      <span className="text-sm text-dark-500">
-                        {formatSentimentScore(response.sentiment_score || 0)}
-                      </span>
+                      {showSentiment && (
+                        <Badge variant={getSentimentFromScore(response.sentiment_score).color}>
+                          {getSentimentFromScore(response.sentiment_score).emoji} {getSentimentFromScore(response.sentiment_score).label}
+                        </Badge>
+                      )}
+                      {showSentiment && (
+                        <span className="text-sm text-dark-500">
+                          {formatSentimentScore(response.sentiment_score)}
+                        </span>
+                      )}
                     </div>
 
                     <p className="text-dark-700">
