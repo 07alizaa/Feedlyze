@@ -4,24 +4,36 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 const FAQ = () => {
   const faqs = [
     {
-      question: "How does the AI sentiment analysis work?",
-      answer: "Our AI uses advanced language models to analyze text responses and detect positive, negative, or neutral sentiment. It also extracts key themes and topics that customers mention most frequently, saving you hours of manual reading."
+      question: "What is Feedlyze and what problem does it solve?",
+      answer: "Feedlyze digitizes manual feedback collection by replacing paper forms with QR-based digital surveys. It helps businesses and institutions transition from physical feedback cards to centralized digital feedback systems, making analysis more efficient and reducing paper waste."
     },
     {
-      question: "Can I customize the surveys with my branding?",
-      answer: "Yes! Pro and Enterprise plans allow you to add your logo, customize colors, and match your brand identity perfectly."
+      question: "How does the QR code feedback collection work?",
+      answer: "You create a digital survey in Feedlyze and generate a unique QR code. Print and display this code where you want feedback—on counters, tables, or service points. Respondents scan it with their phone camera, complete the survey digitally, and responses are immediately available in your dashboard."
     },
     {
-      question: "What happens if I exceed my response limit?",
-      answer: "You'll receive a notification when approaching your limit. You can upgrade your plan anytime or just pay for the extra responses for that month. We won't cut you off."
+      question: "What kind of AI analysis does Feedlyze provide?",
+      answer: "The system provides basic AI-assisted sentiment analysis to categorize responses as positive, negative, or neutral based on text content. It also identifies frequently mentioned words and themes, helping you quickly understand common feedback patterns without reading every response individually."
     },
     {
-      question: "Is my customer data secure?",
-      answer: "Absolutely. We use enterprise-grade encryption, secure cloud storage, and comply with GDPR and data protection regulations to keep your data safe."
+      question: "Do respondents need to install an app or create an account?",
+      answer: "No. Respondents simply scan the QR code with their phone's camera, which opens the survey in their mobile browser. No app installation, account creation, or login is required, making it accessible for all customers."
     },
     {
-      question: "Can I export my feedback data?",
-      answer: "Yes, you can export responses as CSV, Excel, or PDF reports at any time for further analysis or sharing with your team."
+      question: "How is my feedback data stored and protected?",
+      answer: "All collected feedback is stored securely in your private dashboard. We implement standard data protection practices including encryption and access controls appropriate for academic and business use. You maintain ownership of all your collected data."
+    },
+    {
+      question: "Can I access my data outside the Feedlyze platform?",
+      answer: "Yes, you can export your collected responses in CSV format for offline analysis, reporting, or archival purposes. This ensures you always have access to your data."
+    },
+    {
+      question: "What types of organizations benefit from Feedlyze?",
+      answer: "Any organization that collects regular customer or visitor feedback can benefit—restaurants, retail stores, healthcare facilities, educational institutions, and service businesses. It's particularly useful for those currently using paper feedback forms or manual collection methods."
+    },
+    {
+      question: "How quickly can I start collecting feedback?",
+      answer: "You can create your first survey and generate a QR code within minutes. Once printed and displayed, you can start receiving digital feedback immediately from anyone with a smartphone camera."
     }
   ];
 
@@ -32,6 +44,9 @@ const FAQ = () => {
           <h2 className="text-3xl font-extrabold text-dark-900 sm:text-4xl">
             Frequently Asked Questions
           </h2>
+          <p className="mt-4 text-xl text-dark-500">
+            Common questions about digital feedback collection
+          </p>
         </div>
 
         <div className="space-y-4">
