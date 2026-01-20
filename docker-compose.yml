@@ -16,7 +16,7 @@ services:
 
   backend:
     build:
-      context: ./feedlyze_backend
+      context: ./feedlyze-backend
     container_name: backend
     env_file:
       - ./backend/.env
@@ -27,7 +27,7 @@ services:
 
   frontend:
     build:
-      context: ./feedlyze_frontend
+      context: ./feedlyze-frontend
       args:
         VITE_API_URL: "http://localhost:5173/api"
     container_name: frontend
