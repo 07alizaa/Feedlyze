@@ -17,7 +17,6 @@ services:
   backend:
     build:
       context: ./feedlyze-backend
-    container_name: backend
     env_file:
       - ./backend/.env
     ports:
