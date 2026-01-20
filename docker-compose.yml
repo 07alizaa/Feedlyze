@@ -1,0 +1,40 @@
+
+services:
+  db:
+    image: postgres:15
+    container_name: feedlyze_db
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: "password@1111"
+      POSTGRES_DB: feedlyze_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  backend:
+    build:
+      context: ./feedlyze_backend
+    container_name: backend
+    env_file:
+      - ./backend/.env
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./feedlyze_frontend
+      args:
+        VITE_API_URL: "http://localhost:5173/api"
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

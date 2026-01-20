@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+yarn.lock
+
+.env
+.env.*
+*.pem
+
+.git
+.gitignore
+
+Dockerfile
+docker-compose.yml
+
+dist
+build
