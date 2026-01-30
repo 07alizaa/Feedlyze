@@ -42,13 +42,13 @@ jobs:
 
       # Step 3: Install backend dependencies
       - name: Install dependencies
-        run: npm install
-        working-directory: ./feedlyze_backend
+        run: npm ci
+        working-directory: ./feedlyze-backend
 
       # Step 4: Run ESLint to check for code issues (warnings only)
       - name: Run linting
         run: npm run lint || true
-        working-directory: ./feedlyze_backend
+        working-directory: ./feedlyze-backend
 
   # ---------------------------------------------------------------------------
   # Job: Build Frontend
@@ -66,18 +66,18 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
-        working-directory: ./feedlyze_frontend
+        run: npm ci
+        working-directory: ./feedlyze-frontend
 
       # Step 4: Run ESLint to check for code issues (warnings only)
       - name: Run linting
         run: npm run lint || true
-        working-directory: ./feedlyze_frontend
+        working-directory: ./feedlyze-frontend
 
       # Step 5: Build the React app
       - name: Build frontend
         run: npm run build
-        working-directory: ./feedlyze_frontend
+        working-directory: ./feedlyze-frontend
 
   # deploy:
   #   needs:
