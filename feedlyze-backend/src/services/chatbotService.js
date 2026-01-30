@@ -20,6 +20,11 @@ const getDeepSeek = () => {
   const key = getDeepSeekKey();
   return key ? new OpenAI({ apiKey: key, baseURL: 'https://api.deepseek.com' }) : null;
 };
+const getOpenAIKey = () => process.env.OPENAI_API_KEY;
+const getOpenAI = () => {
+  const key = getOpenAIKey();
+  return key ? new OpenAI({ apiKey: key }) : null;
+};
 
 // Store conversation history per user session
 const conversationHistory = new Map();

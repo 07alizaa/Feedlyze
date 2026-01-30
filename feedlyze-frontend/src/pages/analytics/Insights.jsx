@@ -80,12 +80,11 @@ const Analytics = () => {
         params.append('survey_id', selectedSurvey);
       }
 
-      const [overviewRes, insightsRes] = await Promise.all([
-        api.get(`/insights/overview?${params.toString()}`).catch(() => ({ data: { data: {} } })),
+      const [insightsRes] = await Promise.all([
         api.get(`/insights/weekly?${params.toString()}`).catch(() => ({ data: { data: {} } })),
       ]);
 
-      const overviewData = overviewRes.data.data || {};
+
       const insightsData = insightsRes.data.data || {};
 
       // Filter all insights/analytics to only valid, analyzed responses
@@ -152,16 +151,7 @@ const Analytics = () => {
     }
   };
 
-  const generateSentimentTrend = (dailyStats) => {
-    if (!dailyStats || dailyStats.length === 0) {
-      return [];
-    }
-    return dailyStats.map((stat) => ({
-      date: new Date(stat.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      sentiment: parseFloat(stat.avgSentiment || 0), // keep as number for recharts
-      responses: stat.count || 0,
-    }));
-  };
+
 
   const handleExportReport = () => {
     toast.success('Report export coming soon!');
