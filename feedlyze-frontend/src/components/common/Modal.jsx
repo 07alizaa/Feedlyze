@@ -14,6 +14,7 @@ const Modal = ({
   open,
   onClose,
   children,
+  title,
   size = 'md',
   showCloseButton = true,
   closeOnOverlayClick = true,
@@ -55,7 +56,14 @@ const Modal = ({
               <X className="w-5 h-5" />
             </button>
           )}
-          {children}
+          {title && (
+            <div className="px-6 pt-6 pb-2">
+              <h2 className="text-xl font-semibold text-dark-900">{title}</h2>
+            </div>
+          )}
+          <div className="px-6 pb-6">
+            {children}
+          </div>
         </div>
       </div>
     </div>

@@ -339,17 +339,30 @@ const SurveysList = () => {
           setShowDeleteModal(false);
           setDeletingSurvey(null);
         }}
-        title="Delete Survey"
+        size="sm"
       >
-        <div className="space-y-4">
-          <p className="text-dark-600">
-            Are you sure you want to delete <strong>{deletingSurvey?.title}</strong>?
+        <div className="text-center">
+          {/* Warning Icon */}
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+            <Trash2 className="h-6 w-6 text-red-600" />
+          </div>
+          
+          {/* Title */}
+          <h3 className="text-lg font-semibold text-dark-900 mb-2">
+            Delete Survey
+          </h3>
+          
+          {/* Description */}
+          <p className="text-dark-600 mb-1">
+            Are you sure you want to delete <strong className="text-dark-900">{deletingSurvey?.title}</strong>?
           </p>
-          <p className="text-sm text-dark-500">
+          <p className="text-sm text-dark-500 mb-6">
             This will permanently delete the survey and all {deletingSurvey?.response_count || 0} responses. 
             This action cannot be undone.
           </p>
-          <div className="flex gap-3 justify-end pt-4">
+          
+          {/* Buttons */}
+          <div className="flex gap-3 justify-center">
             <Button
               variant="secondary"
               onClick={() => {
