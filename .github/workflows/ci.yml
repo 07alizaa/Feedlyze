@@ -1,58 +1,38 @@
-# =============================================================================
-# CI Pipeline - Basic Version
-# =============================================================================
-# A GitHub Actions workflow file has 3 main parts:
-#   1. name     - What to call this workflow
-#   2. on       - When to run it (triggers)
-#   3. jobs     - What to do when it runs
+name: CI/CD Pipeline
 
-name: CI Pipeline
-
-# =============================================================================
-# PART 1: TRIGGERS (on)
-# When should this workflow run?
-# =============================================================================
 on:
   push:
-    branches: [main]      # Run when code is pushed to main
+    branches: [main]
   pull_request:
-    branches: [main]      # Run when a PR is opened to main
+    branches: [main]
 
-# =============================================================================
-# PART 2: JOBS
-# What work needs to be done?
-# =============================================================================
 jobs:
-  # ---------------------------------------------------------------------------
-  # Job: Build Backend
-  # ---------------------------------------------------------------------------
+  # =========================
+  # CI: Backend
+  # =========================
   build-backend:
-    runs-on: ubuntu-latest    # Run on a Ubuntu virtual machine
+    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Get the code from the repository
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2: Install Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # Step 3: Install backend dependencies
-      - name: Install dependencies
+      - name: Install backend dependencies
         run: npm ci
         working-directory: ./feedlyze-backend
 
-      # Step 4: Run ESLint to check for code issues (warnings only)
-      - name: Run linting
+      - name: Run backend lint
         run: npm run lint || true
         working-directory: ./feedlyze-backend
 
-  # ---------------------------------------------------------------------------
-  # Job: Build Frontend
-  # ---------------------------------------------------------------------------
+  # =========================
+  # CI: Frontend
+  # =========================
   build-frontend:
     runs-on: ubuntu-latest
 
@@ -65,54 +45,51 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: npm ci
         working-directory: ./feedlyze-frontend
 
-      # Step 4: Run ESLint to check for code issues (warnings only)
-      - name: Run linting
+      - name: Run frontend lint
         run: npm run lint || true
         working-directory: ./feedlyze-frontend
 
-      # Step 5: Build the React app
       - name: Build frontend
         run: npm run build
         working-directory: ./feedlyze-frontend
 
-  # deploy:
-  #   needs:
-  #     - build-backend
-  #     - build-frontend
-  #   if: github.event_name == 'push'
-  #   runs-on: ubuntu-latest
+  # =========================
+  # CD: Deploy to EC2
+  # =========================
+  deploy:
+    needs:
+      - build-backend
+      - build-frontend
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Add EC2 host to known_hosts
-  #       run: |
-  #         mkdir -p ~/.ssh
-  #         ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
-  #       env:
-  #         EC2_HOST: ${{ secrets.EC2_HOST }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Write SSH key
-  #       run: |
-  #         echo "${EC2_KEY}" > ec2_key.pem
-  #         chmod 600 ec2_key.pem
-  #       env:
-  #         EC2_KEY: ${{ secrets.EC2_KEY }}
+      - name: Add EC2 host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-  #     - name: Deploy on EC2
-  #       env:
-  #         EC2_HOST: ${{ secrets.EC2_HOST }}
-  #         EC2_USER: ${{ secrets.EC2_USER }}
-  #         EC2_APP_DIR: ${{ secrets.EC2_APP_DIR }}
-  #       run: |
-  #         ssh -i ec2_key.pem ${EC2_USER}@${EC2_HOST} << EOF
-  #           set -e
-  #           cd "${EC2_APP_DIR}" || exit 1
-  #           git fetch --all
-  #           git reset --hard origin/main
-  #           docker compose up -d --build
-  #           docker image prune -f
-  #           docker compose ps
-  #         EOF
+      - name: Write SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+      - name: Deploy application on EC2
+        run: |
+          ssh -i ec2_key.pem \
+          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            set -e
+            cd ${{ secrets.EC2_APP_DIR }}
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+            docker image prune -f
+          EOF
+
