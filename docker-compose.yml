@@ -33,9 +33,6 @@ services:
          # For local development, comment above and uncomment below:
          # VITE_API_BASE_URL: "http://localhost:5000/api"
     container_name: feedlyze_frontend
-    volumes:
-      - ./feedlyze-frontend:/app
-      - /app/node_modules
     ports:
       - "5173:5173"
     depends_on:
