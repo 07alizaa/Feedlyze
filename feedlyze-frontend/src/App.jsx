@@ -33,6 +33,7 @@ import NotFound from './pages/NotFound';
 
 function App() {
   return (
+    //just made some changes to see the issue with github actions
     <BrowserRouter>
       <AuthProvider>
         {/* Toast Notifications */}
